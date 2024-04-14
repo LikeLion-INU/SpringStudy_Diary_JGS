@@ -1,4 +1,4 @@
-package com.example.Diary.DiaryController;
+package com.example.Diary.Controller;
 
 
 import org.springframework.web.bind.annotation.GetMapping;
