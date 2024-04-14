@@ -1,6 +1,8 @@
 package com.example.Diary.Entity;
 
 import com.example.Diary.Entity.BaseEntity;
+import com.example.Diary.Entity.UsersEntity;
+import com.example.Diary.Entity.DiaryEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 
