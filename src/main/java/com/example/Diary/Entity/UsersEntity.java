@@ -1,10 +1,7 @@
 package com.example.Diary.Entity;
 
 import com.example.Diary.Entity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 
 @Entity
@@ -18,5 +15,11 @@ public class UsersEntity extends BaseEntity{
     private String usersPassword; // 비밀번호
     private String usersNickname; // 닉네임
     private String birthday;    // 생일
-    private String usersPhone; // 전화번호
+
+    /*
+    @ManyToOne
+    @JoinColumn(name = "reigion_id")
+    private RegionEntity region;
+    */
+
 }
