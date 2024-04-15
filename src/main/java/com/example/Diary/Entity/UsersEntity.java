@@ -25,4 +25,10 @@ public class UsersEntity extends BaseEntity{
 
     @OneToMany(mappedBy = "usersEntity", fetch = FetchType.LAZY)
     private List<Viewer> viewerList;
+
+    @OneToMany(mappedBy = "reqUsersEntity", fetch = FetchType.LAZY)
+    private List<Follow> reqFollowList;
+
+    @OneToMany(mappedBy = "resUsersEntity", fetch = FetchType.LAZY)
+    private List<Follow> resFollowList;
 }
