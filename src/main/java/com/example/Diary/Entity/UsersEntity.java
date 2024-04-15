@@ -4,6 +4,8 @@ import com.example.Diary.Entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+import java.util.List;
+
 @Entity
 @Getter
 public class UsersEntity extends BaseEntity{
@@ -16,10 +18,17 @@ public class UsersEntity extends BaseEntity{
     private String usersNickname; // 닉네임
     private String birthday;    // 생일
 
-    /*
-    @ManyToOne
-    @JoinColumn(name = "reigion_id")
-    private RegionEntity region;
-    */
 
+    @ManyToOne
+    @JoinColumn(name = "region_id")
+    private Region region;
+
+    @OneToMany(mappedBy = "usersEntity", fetch = FetchType.LAZY)
+    private List<Viewer> viewerList;
+
+    @OneToMany(mappedBy = "reqUsersEntity", fetch = FetchType.LAZY)
+    private List<Follow> reqFollowList;
+
+    @OneToMany(mappedBy = "resUsersEntity", fetch = FetchType.LAZY)
+    private List<Follow> resFollowList;
 }
