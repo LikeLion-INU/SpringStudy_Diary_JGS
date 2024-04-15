@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Entity
@@ -26,10 +27,6 @@ public class DiaryEntity extends BaseEntity{
     @JoinColumn(name = "users_id")
     private UsersEntity users;
 
-
-
-
-
-
-
+    @OneToMany(mappedBy = "diaryEntity")
+    private List<PhotoFile> photoFileList;
 }
