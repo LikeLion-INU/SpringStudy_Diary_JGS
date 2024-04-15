@@ -3,6 +3,8 @@ package com.example.Diary.Entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @Entity
 public class Region {
@@ -16,5 +18,8 @@ public class Region {
 
     @ManyToOne
     @JoinColumn(name="rf_id")
-    private RegionFirst regionFirst;   // 도어락 구분자
+    private RegionFirst regionFirst;   // 시도 구분자
+
+    @OneToMany(mappedBy = "region")
+    private List<UsersEntity> usersEntityList;
 }

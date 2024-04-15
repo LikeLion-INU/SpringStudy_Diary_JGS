@@ -16,10 +16,8 @@ public class UsersEntity extends BaseEntity{
     private String usersNickname; // 닉네임
     private String birthday;    // 생일
 
-    /*
-    @ManyToOne
-    @JoinColumn(name = "reigion_id")
-    private RegionEntity region;
-    */
 
+    @ManyToOne
+    @JoinColumn(name = "region_id")
+    private Region region;
 }
