@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class diarycontroller {
+public class DiaryController {
     @GetMapping("/get")
     public String getTest(){
         return "success";
