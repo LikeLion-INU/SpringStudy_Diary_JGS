@@ -4,6 +4,8 @@ import com.example.Diary.Entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+import java.util.List;
+
 @Entity
 @Getter
 public class UsersEntity extends BaseEntity{
@@ -20,4 +22,7 @@ public class UsersEntity extends BaseEntity{
     @ManyToOne
     @JoinColumn(name = "region_id")
     private Region region;
+
+    @OneToMany(mappedBy = "usersEntity", fetch = FetchType.LAZY)
+    private List<Viewer> viewerList;
 }

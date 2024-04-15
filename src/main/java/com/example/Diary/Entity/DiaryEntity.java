@@ -29,4 +29,7 @@ public class DiaryEntity extends BaseEntity{
 
     @OneToMany(mappedBy = "diaryEntity")
     private List<PhotoFile> photoFileList;
+
+    @OneToMany(mappedBy = "diaryEntity", fetch = FetchType.LAZY)
+    private List<Viewer> viewerList;
 }
