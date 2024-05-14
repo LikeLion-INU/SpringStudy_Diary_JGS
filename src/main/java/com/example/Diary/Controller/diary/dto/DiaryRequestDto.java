@@ -13,6 +13,10 @@ public class DiaryRequestDto {
 
     }
     @Data
+    public static class deleteDiary{
+
+    }
+    @Data
     public static class diaryList{
 
     }

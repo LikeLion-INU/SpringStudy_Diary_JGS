@@ -13,6 +13,10 @@ public class DiaryResponseDto {
 
     }
     @Getter
+    public static class deleteDiary{
+
+    }
+    @Getter
     public static class diaryList{
 
     }

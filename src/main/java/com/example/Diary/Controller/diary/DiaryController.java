@@ -35,6 +35,16 @@ public class DiaryController {
     }
 
     /**
+     * 다이어리 - 작성한 다이어리 삭제
+     * @param dto DiaryRequestDto.deleteDiary
+     * @return ResponseEntity<?>
+     */
+    @PostMapping("/deleteDiary")
+    public ResponseEntity<?> deleteDiary(@RequestBody DiaryRequestDto.deleteDiary dto) {
+        return ResponseEntity.ok().body(diaryService.deleteDiary(dto));
+    }
+
+    /**
      * 다이어리 - 열람가능한 다이어리 리스트 조회
      * @param dto DiaryRequestDto.diaryList
      * @return ResponseEntity<?>
