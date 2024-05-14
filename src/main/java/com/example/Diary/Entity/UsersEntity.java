@@ -19,9 +19,9 @@ public class UsersEntity extends BaseEntity{
     private String birthday;    // 생일
 
 
-    @ManyToOne
-    @JoinColumn(name = "region_id")
-    private Region region;
+//    @ManyToOne
+//    @JoinColumn(name = "region_id")
+//    private Region region;
 
     @OneToMany(mappedBy = "usersEntity", fetch = FetchType.LAZY)
     private List<Viewer> viewerList;
