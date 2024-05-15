@@ -1,11 +1,17 @@
-package com.example.Diary.Controller.diary.dto;
+package com.example.Diary.Dto.Diary;
 
 import lombok.Getter;
+
+import java.time.LocalDate;
 
 @Getter
 public class DiaryResponseDto {
     @Getter
     public static class writeDiary{
+        private LocalDate recordDate;
+        private String weather;
+        private Double minTemp;
+        private Double maxTemp;
 
     }
     @Getter

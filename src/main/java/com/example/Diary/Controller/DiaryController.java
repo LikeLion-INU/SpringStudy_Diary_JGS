@@ -1,6 +1,7 @@
-package com.example.Diary.Controller.diary;
+package com.example.Diary.Controller;
 
-import com.example.Diary.Controller.diary.dto.DiaryRequestDto;
+import com.example.Diary.Dto.Diary.DiaryRequestDto;
+import com.example.Diary.Service.Diary.DiaryServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;

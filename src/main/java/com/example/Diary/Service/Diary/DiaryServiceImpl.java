@@ -1,10 +1,12 @@
-package com.example.Diary.Controller.diary;
+package com.example.Diary.Service.Diary;
 
-import com.example.Diary.Controller.diary.dto.DiaryRequestDto;
-import com.example.Diary.Controller.diary.dto.DiaryResponseDto;
+import com.example.Diary.Dto.Diary.DiaryRequestDto;
+import com.example.Diary.Dto.Diary.DiaryResponseDto;
 import com.example.Diary.Entity.DiaryEntity;
 import com.example.Diary.Entity.UsersEntity;
 import com.example.Diary.Repository.DiaryRepository;
+import com.example.Diary.Repository.Users.UsersRepository;
+import com.example.Diary.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -21,11 +23,13 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class DiaryServiceImpl implements DiaryService{
+    private final UsersRepository usersRepository;
     private final DiaryRepository diaryRepository;
 
     /**
@@ -34,28 +38,35 @@ public class DiaryServiceImpl implements DiaryService{
      * @return DiaryResponseDto.writeDiary
      */
     @Override
-    public DiaryResponseDto.writeDiary writeDiary(DiaryRequestDto.writeDiary dto, Long userId) throws ParseException {
-//        // 1. 존재하는 user인지 확인
-//        UsersEntity users =
+    public ApiResponse<DiaryResponseDto.writeDiary> writeDiary(DiaryRequestDto.writeDiary dto, Long userId) throws ParseException {
+        // 1. 존재하는 user인지 확인
+        Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
+        if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
+        UsersEntity users = usersOpt.get();
 
-        // 1. 날씨 API 로 전달할 데이터 set 생성
+        // 2. 날씨 API 로 전달할 데이터 set 생성
         Map<String, Object> dataSet = new HashMap<>();
 
-        // 2. 위.경도 데이터 가져오기
+        // 3. 위.경도 데이터 가져오기
         JSONObject latAndLon = getLatAndLon(dto.getLocationName());
         dataSet.put("lat", latAndLon.get("lat"));
         dataSet.put("lon", latAndLon.get("lon"));
 
-        // 3. 해당 날짜의 00시 unix 시간 가져오기
+        // 4. 해당 날짜의 00시 unix 시간 가져오기
         dataSet.put("nowUnixTime", unixTime(LocalDate.of(dto.getYear(), dto.getMonth(), dto.getDay())));
 
-        // 4. 전달받은 날짜를 가지고 날씨 API에서 데이터 가져오기
+        // 5. 전달받은 날짜를 가지고 날씨 API에서 데이터 가져오기
         Map<String, Object> weather = getWeather(dataSet);
 
-        // 4. 데이터 저장
-        DiaryEntity diaryEntity = dto.toEntity(weather);
+        // 6. 다이어리 저장
+        DiaryEntity diaryEntity = dto.toEntity(weather, users);
+        Long diaryId = diaryRepository.save(diaryEntity).getId();
 
-        return null;
+        // 7. 일부 공개의 경우, 열람 가능한 리스트 저장
+
+        // 8. 사진이 존재하는 경우, 사진 데이터 저장
+
+        return ApiResponse.SUCCESS(200, "저장되었습니다.");
     }
 
     /**
@@ -64,7 +75,7 @@ public class DiaryServiceImpl implements DiaryService{
      * @return DiaryResponseDto.updateDiary
      */
     @Override
-    public DiaryResponseDto.updateDiary updateDiary(DiaryRequestDto.updateDiary dto, Long userId) {
+    public ApiResponse<?> updateDiary(DiaryRequestDto.updateDiary dto, Long userId) {
         // 1. 구분자 값으로 데이터 존재 여부 확인
 
         // 2. 데이터가 존재하는 경우, 날짜값을 비교하여 날짜가 변경된 경우, 날씨 API에서 데이터 가져오기
@@ -79,7 +90,7 @@ public class DiaryServiceImpl implements DiaryService{
      * @return DiaryResponseDto.deleteDiary
      */
     @Override
-    public DiaryResponseDto.deleteDiary deleteDiary(DiaryRequestDto.deleteDiary dto, Long userId) {
+    public ApiResponse<?> deleteDiary(DiaryRequestDto.deleteDiary dto, Long userId) {
         // 1. 데이터 존재 여부 확인
 
         // 2. 존재하는 경우, 삭제
@@ -92,7 +103,7 @@ public class DiaryServiceImpl implements DiaryService{
      * @return DiaryResponseDto.diaryList
      */
     @Override
-    public DiaryResponseDto.diaryList diaryList(DiaryRequestDto.diaryList dto, Long userId) {
+    public ApiResponse<?> diaryList(DiaryRequestDto.diaryList dto, Long userId) {
         // 1. 사용자가 팔로우한 목록 확인
 
         // 2. 본인 및 팔로우한 사람이 작성한 사람에 해당하는 데이터 가져오기
@@ -107,7 +118,7 @@ public class DiaryServiceImpl implements DiaryService{
      * @return DiaryResponseDto.diaryContent
      */
     @Override
-    public DiaryResponseDto.diaryContent diaryContent(DiaryRequestDto.diaryContent dto, Long userId) {
+    public ApiResponse<?> diaryContent(DiaryRequestDto.diaryContent dto, Long userId) {
         // 1. 조회 요청한 다이어리 정보 가져오기
 
         // 2. 사용자가 팔로우한 사용자인지 확인
