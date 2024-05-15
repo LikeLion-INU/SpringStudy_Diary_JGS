@@ -72,8 +72,8 @@ public class DiaryServiceImpl implements DiaryService{
      * @param dto DiaryRequestDto.updateDiary
      * @return ApiResponse<DiaryResponseDto.updateDiary>
      */
-    @Transactional
     @Override
+    @Transactional
     public ApiResponse<?> updateDiary(DiaryRequestDto.updateDiary dto, Long userId) throws ParseException {
         // 1. 존재하는 user인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
@@ -113,11 +113,27 @@ public class DiaryServiceImpl implements DiaryService{
      * @return DiaryResponseDto.deleteDiary
      */
     @Override
+    @Transactional
     public ApiResponse<?> deleteDiary(DiaryRequestDto.deleteDiary dto, Long userId) {
-        // 1. 데이터 존재 여부 확인
+        // 1. 존재하는 user인지 확인
+        Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
+        if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
+        UsersEntity users = usersOpt.get();
 
-        // 2. 존재하는 경우, 삭제
-        return null;
+        // 2. 존재하는 diary인지 확인
+        Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
+        if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
+            return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
+        DiaryEntity diary = diaryOpt.get();
+
+        // 3. 사진 데이터 확인 후 삭제
+
+        // 4. 열람 가능 사용자 로우 확인후 삭제
+
+        // 5. diary 삭제
+        diaryRepository.delete(diary);
+
+        return ApiResponse.SUCCESS(200, "삭제되었습니다.");
     }
 
     /**

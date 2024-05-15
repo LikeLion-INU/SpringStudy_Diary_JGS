@@ -51,7 +51,7 @@ public class DiaryRequestDto {
     }
     @Data
     public static class deleteDiary{
-
+        private Long diaryId;
     }
     @Data
     public static class diaryList{
