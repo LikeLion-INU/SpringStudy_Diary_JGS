@@ -15,7 +15,10 @@ public class Region {
     private String regionName;  // 시도명
     private int nx;             // X 좌표
     private int yx;             // Y 좌표
+}
 
+
+    /*
     @ManyToOne
     @JoinColumn(name="rf_id")
     private RegionFirst regionFirst;   // 시도 구분자
@@ -23,3 +26,4 @@ public class Region {
     @OneToMany(mappedBy = "region")
     private List<UsersEntity> usersEntityList;
 }
+*/

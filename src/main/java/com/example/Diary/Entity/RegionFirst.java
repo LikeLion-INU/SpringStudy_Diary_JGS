@@ -14,7 +14,12 @@ public class RegionFirst {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;        // 고유 식별자
     private String rfName;  // 시도명
+}
 
+
+    /*
     @OneToMany(mappedBy = "regionFirst")
     private List<Region> regionList;
 }
+*/
+
