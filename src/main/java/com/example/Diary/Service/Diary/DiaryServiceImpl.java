@@ -145,15 +145,20 @@ public class DiaryServiceImpl implements DiaryService{
      */
     @Override
     public ApiResponse<?> canViewDiaryList(Long userId) {
-        // 1. 본인 및 팔로우한 사람이 작성한 사람에 해당하는 데이터 가져오기
+        // 1. 존재하는 user인지 확인
+        Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
+        if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
+        UsersEntity users = usersOpt.get();
+
+        // 2. 본인 및 팔로우한 사람이 작성한 사람에 해당하는 데이터 가져오기
         List<DiaryEntity> canViewDiaryList = diaryRepository.canViewDiaryList(userId);
 
-        // 2. entity 데이터 dto 로 전환
+        // 3. entity 데이터 dto 로 전환
         List<DiaryDto> diaryDtoList = new ArrayList<>();
         for (DiaryEntity entity: canViewDiaryList){
             DiaryDto diaryDto = new DiaryDto(entity);
 
-            // 2-1. 이미지가 있는 경우, 이미지 첨부
+            // 3-1. 이미지가 있는 경우, 이미지 첨부
 
             diaryDtoList.add(diaryDto);
         }
