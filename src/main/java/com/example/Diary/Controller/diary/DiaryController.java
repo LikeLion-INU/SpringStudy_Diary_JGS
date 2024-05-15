@@ -1,7 +1,10 @@
 package com.example.Diary.Controller.diary;
 
 import com.example.Diary.Controller.diary.dto.DiaryRequestDto;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.json.simple.parser.ParseException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,8 +23,11 @@ public class DiaryController {
      * @return ResponseEntity<?>
      */
     @PostMapping("/writeDiary")
-    public ResponseEntity<?> writeDiary(@RequestBody DiaryRequestDto.writeDiary dto) {
-        return ResponseEntity.ok().body(diaryService.writeDiary(dto));
+    public ResponseEntity<?> writeDiary(@RequestBody DiaryRequestDto.writeDiary dto, HttpServletRequest request) throws ParseException {
+        HttpSession session = request.getSession(false);
+        Long userId = (Long) session.getAttribute("userId");
+
+        return ResponseEntity.ok().body(diaryService.writeDiary(dto, userId));
     }
 
     /**
@@ -30,8 +36,10 @@ public class DiaryController {
      * @return ResponseEntity<?>
      */
     @PostMapping("/updateDiary")
-    public ResponseEntity<?> updateDiary(@RequestBody DiaryRequestDto.updateDiary dto) {
-        return ResponseEntity.ok().body(diaryService.updateDiary(dto));
+    public ResponseEntity<?> updateDiary(@RequestBody DiaryRequestDto.updateDiary dto, HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        Long userId = (Long) session.getAttribute("userId");
+        return ResponseEntity.ok().body(diaryService.updateDiary(dto, userId));
     }
 
     /**
@@ -40,8 +48,10 @@ public class DiaryController {
      * @return ResponseEntity<?>
      */
     @PostMapping("/deleteDiary")
-    public ResponseEntity<?> deleteDiary(@RequestBody DiaryRequestDto.deleteDiary dto) {
-        return ResponseEntity.ok().body(diaryService.deleteDiary(dto));
+    public ResponseEntity<?> deleteDiary(@RequestBody DiaryRequestDto.deleteDiary dto, HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        Long userId = (Long) session.getAttribute("userId");
+        return ResponseEntity.ok().body(diaryService.deleteDiary(dto, userId));
     }
 
     /**
@@ -50,8 +60,10 @@ public class DiaryController {
      * @return ResponseEntity<?>
      */
     @PostMapping("/diaryList")
-    public ResponseEntity<?> diaryList(@RequestBody DiaryRequestDto.diaryList dto) {
-        return ResponseEntity.ok().body(diaryService.diaryList(dto));
+    public ResponseEntity<?> diaryList(@RequestBody DiaryRequestDto.diaryList dto, HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        Long userId = (Long) session.getAttribute("userId");
+        return ResponseEntity.ok().body(diaryService.diaryList(dto, userId));
     }
 
     /**
@@ -60,7 +72,9 @@ public class DiaryController {
      * @return ResponseEntity<?>
      */
     @PostMapping("/diaryContent")
-    public ResponseEntity<?> diaryContent(@RequestBody DiaryRequestDto.diaryContent dto) {
-        return ResponseEntity.ok().body(diaryService.diaryContent(dto));
+    public ResponseEntity<?> diaryContent(@RequestBody DiaryRequestDto.diaryContent dto, HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        Long userId = (Long) session.getAttribute("userId");
+        return ResponseEntity.ok().body(diaryService.diaryContent(dto, userId));
     }
 }
