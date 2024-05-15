@@ -4,9 +4,13 @@ import com.example.Diary.Dto.Diary.DiaryDto;
 import com.example.Diary.Dto.Diary.DiaryRequestDto;
 import com.example.Diary.Dto.Diary.DiaryResponseDto;
 import com.example.Diary.Entity.DiaryEntity;
+import com.example.Diary.Entity.Follow;
 import com.example.Diary.Entity.UsersEntity;
+import com.example.Diary.Entity.Viewer;
 import com.example.Diary.Repository.DiaryRepository;
+import com.example.Diary.Repository.FollowRepository;
 import com.example.Diary.Repository.Users.UsersRepository;
+import com.example.Diary.Repository.ViewerRepository;
 import com.example.Diary.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +35,8 @@ import java.util.*;
 public class DiaryServiceImpl implements DiaryService{
     private final UsersRepository usersRepository;
     private final DiaryRepository diaryRepository;
+    private final FollowRepository followRepository;
+    private final ViewerRepository viewerRepository;
 
     /**
      * 다이어리 - 다이어리 작성 (날씨 API / 이미지 첨부)
@@ -177,13 +183,46 @@ public class DiaryServiceImpl implements DiaryService{
      */
     @Override
     public ApiResponse<?> diaryContent(DiaryRequestDto.diaryContent dto, Long userId) {
-        // 1. 조회 요청한 다이어리 정보 가져오기
+        // 1. 존재하는 user인지 확인
+        Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
+        if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
+        UsersEntity users = usersOpt.get();
 
-        // 2. 사용자가 팔로우한 사용자인지 확인
+        // 2. 존재하는 diary인지 확인
+        Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
+        if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
+            return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
+        DiaryEntity diary = diaryOpt.get();
 
-        // 3. 2에서 접근 권한이 있는 경우, 데이터 전달
+        // 3. 본인이 작성한 diary인지 확인
+        if (userId.equals(diary.getUsers().getId()))
+            return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
+                    new DiaryResponseDto.diaryContent(diary));
 
-        return null;
+        // 4. 비공개 상태인지 확인
+        if(diary.getPublicState() == 1)
+            return ApiResponse.ERROR(401, "열람 불가능한 diary 입니다.");
+
+        // 5. 승인된 팔로우 인지 확인
+        Optional<Follow> followOpt = followRepository
+                .findByApproveYnAndReqUsersEntity_IdAndResUsersEntity_Id(
+                        1, userId, diary.getUsers().getId());
+        if(followOpt.isEmpty())
+            return ApiResponse.ERROR(401, "열람 불가능한 diary 입니다.");
+
+        // 6. 전체 공개 상태인지 확인
+        if(diary.getPublicState() == 0)
+            return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
+                    new DiaryResponseDto.diaryContent(diary));
+
+        // 7. 일부공개 권한이 있는 viewer인지 확인
+        Optional<Viewer> viewerOpt = viewerRepository
+                .findByDiaryEntity_IdAndUsersEntity_Id(diary.getId(), userId);
+        if(viewerOpt.isEmpty())
+            return ApiResponse.ERROR(401, "열람 불가능한 diary 입니다.");
+        else
+            return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
+                    new DiaryResponseDto.diaryContent(diary));
     }
 
 
