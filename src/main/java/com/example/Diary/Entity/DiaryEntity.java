@@ -1,17 +1,23 @@
 package com.example.Diary.Entity;
 
+import com.example.Diary.Dto.Diary.DiaryRequestDto;
 import com.example.Diary.Entity.BaseEntity;
 import com.example.Diary.Entity.UsersEntity;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Builder
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
 public class DiaryEntity extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,4 +43,18 @@ public class DiaryEntity extends BaseEntity{
 
     @OneToMany(mappedBy = "diaryEntity", fetch = FetchType.LAZY)
     private List<Viewer> viewerList;
+
+
+    // 다이어리 수정
+    public void updateDiary( DiaryRequestDto.updateDiary dto, Map<String, Object> weather){
+        this.publicState = dto.getPublicState();
+        this.recordDate = LocalDate.of(dto.getYear(), dto.getMonth(), dto.getDay());
+        this.weather = (String) weather.get("weather");
+        this.tempMin = (Double) weather.get("tempMin");
+        this.tempMax = (Double) weather.get("tempMax");
+        this.title = dto.getTitle();
+        this.contents = dto.getContents();
+        this.photoYn = dto.getPhotoYn();
+    }
+
 }

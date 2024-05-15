@@ -15,6 +15,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
@@ -35,7 +36,7 @@ public class DiaryServiceImpl implements DiaryService{
     /**
      * 다이어리 - 다이어리 작성 (날씨 API / 이미지 첨부)
      * @param dto DiaryRequestDto.writeDiary
-     * @return DiaryResponseDto.writeDiary
+     * @return ApiResponse<DiaryResponseDto.writeDiary>
      */
     @Override
     public ApiResponse<DiaryResponseDto.writeDiary> writeDiary(DiaryRequestDto.writeDiary dto, Long userId) throws ParseException {
@@ -44,44 +45,66 @@ public class DiaryServiceImpl implements DiaryService{
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
         UsersEntity users = usersOpt.get();
 
-        // 2. 날씨 API 로 전달할 데이터 set 생성
-        Map<String, Object> dataSet = new HashMap<>();
+        // 2. DB에 저장할 날씨 데이터 생성
+        Map<String, Object> weather = setWeatherData(
+                dto.getLocationName(),dto.getYear(), dto.getMonth(), dto.getDay());
 
-        // 3. 위.경도 데이터 가져오기
-        JSONObject latAndLon = getLatAndLon(dto.getLocationName());
-        dataSet.put("lat", latAndLon.get("lat"));
-        dataSet.put("lon", latAndLon.get("lon"));
-
-        // 4. 해당 날짜의 00시 unix 시간 가져오기
-        dataSet.put("nowUnixTime", unixTime(LocalDate.of(dto.getYear(), dto.getMonth(), dto.getDay())));
-
-        // 5. 전달받은 날짜를 가지고 날씨 API에서 데이터 가져오기
-        Map<String, Object> weather = getWeather(dataSet);
-
-        // 6. 다이어리 저장
+        // 3. 다이어리 저장
         DiaryEntity diaryEntity = dto.toEntity(weather, users);
         Long diaryId = diaryRepository.save(diaryEntity).getId();
 
-        // 7. 일부 공개의 경우, 열람 가능한 리스트 저장
+        // 4. 일부 공개의 경우, 열람 가능한 리스트 저장
 
-        // 8. 사진이 존재하는 경우, 사진 데이터 저장
+        // 5. 사진이 존재하는 경우, 사진 데이터 저장
 
-        return ApiResponse.SUCCESS(200, "저장되었습니다.");
+        return ApiResponse.SUCCESS(200, "저장되었습니다.",
+                DiaryResponseDto.writeDiary.builder()
+                        .diaryId(diaryId)
+                        .recordDate(diaryEntity.getRecordDate())
+                        .weather(diaryEntity.getWeather())
+                        .tempMin(diaryEntity.getTempMin())
+                        .tempMax(diaryEntity.getTempMax())
+                        .build());
     }
 
     /**
      * 다이어리 - 작성한 다이어리 수정
      * @param dto DiaryRequestDto.updateDiary
-     * @return DiaryResponseDto.updateDiary
+     * @return ApiResponse<DiaryResponseDto.updateDiary>
      */
+    @Transactional
     @Override
-    public ApiResponse<?> updateDiary(DiaryRequestDto.updateDiary dto, Long userId) {
-        // 1. 구분자 값으로 데이터 존재 여부 확인
+    public ApiResponse<?> updateDiary(DiaryRequestDto.updateDiary dto, Long userId) throws ParseException {
+        // 1. 존재하는 user인지 확인
+        Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
+        if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
+        UsersEntity users = usersOpt.get();
 
-        // 2. 데이터가 존재하는 경우, 날짜값을 비교하여 날짜가 변경된 경우, 날씨 API에서 데이터 가져오기
+        // 2. 존재하는 diary인지 확인
+        Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
+        if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
+            return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
+        DiaryEntity diary = diaryOpt.get();
 
-        // 3. 데이터 수정
-        return null;
+        // 3. DB에 저장할 날씨 데이터 생성
+        Map<String, Object> weather = setWeatherData(
+                dto.getLocationName(),dto.getYear(), dto.getMonth(), dto.getDay());
+
+        // 4. 공개정도에 따른 열람가능 로우 삭제 또는 생성, update
+
+        // 5. 사진이 존재여부에 따른 사진 데이터 삭제 또는 저장
+
+        // 6. 데이터 수정
+        diary.updateDiary(dto, weather);
+
+        return ApiResponse.SUCCESS(200, "수정되었습니다.",
+                DiaryResponseDto.updateDiary.builder()
+                        .diaryId(diary.getId())
+                        .recordDate(diary.getRecordDate())
+                        .weather(diary.getWeather())
+                        .tempMin(diary.getTempMin())
+                        .tempMax(diary.getTempMax())
+                        .build());
     }
 
     /**
@@ -129,6 +152,21 @@ public class DiaryServiceImpl implements DiaryService{
     }
 
 
+    // DB에 저장할 날씨 데이터 생성
+    private Map<String, Object> setWeatherData(String locationName, int year, int month, int day) throws ParseException {
+        Map<String, Object> dataSet = new HashMap<>();
+
+        // 3. 위.경도 데이터 가져오기
+        JSONObject latAndLon = getLatAndLon(locationName);
+        dataSet.put("lat", latAndLon.get("lat"));
+        dataSet.put("lon", latAndLon.get("lon"));
+
+        // 4. 해당 날짜의 00시 unix 시간 가져오기
+        dataSet.put("nowUnixTime", unixTime(LocalDate.of(year, month, day)));
+
+        // 5. 전달받은 날짜를 가지고 날씨 API에서 데이터 가져오기
+        return getWeather(dataSet);
+    }
 
     // 유닉스 타임스탬프 시간 얻기
     private long unixTime(LocalDate date){

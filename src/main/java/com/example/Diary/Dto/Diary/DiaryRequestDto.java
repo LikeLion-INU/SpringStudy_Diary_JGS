@@ -37,6 +37,16 @@ public class DiaryRequestDto {
     }
     @Data
     public static class updateDiary{
+        private Long diaryId;
+        private String locationName;
+        private int year;
+        private int month;
+        private int day;
+
+        private int publicState;    //공개상태 (0:전체공개 1:비공개 2:일부공개)
+        private String title;       //제목
+        private String contents;    //내용
+        private int photoYn;        //사진유무 (0:X 1:O)
 
     }
     @Data
