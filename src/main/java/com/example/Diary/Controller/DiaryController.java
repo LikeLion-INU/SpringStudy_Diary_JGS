@@ -56,14 +56,13 @@ public class DiaryController {
 
     /**
      * 다이어리 - 열람가능한 다이어리 리스트 조회
-     * @param dto DiaryRequestDto.diaryList
      * @return ResponseEntity<?>
      */
     @PostMapping("/diaryList")
-    public ResponseEntity<?> diaryList(@RequestBody DiaryRequestDto.diaryList dto, HttpServletRequest request) {
+    public ResponseEntity<?> diaryList(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         Long userId = (Long) session.getAttribute("userId");
-        return ResponseEntity.ok().body(diaryService.diaryList(dto, userId));
+        return ResponseEntity.ok().body(diaryService.canViewDiaryList(userId));
     }
 
     /**

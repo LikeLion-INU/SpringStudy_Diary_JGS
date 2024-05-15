@@ -1,5 +1,6 @@
 package com.example.Diary.Service.Diary;
 
+import com.example.Diary.Dto.Diary.DiaryDto;
 import com.example.Diary.Dto.Diary.DiaryRequestDto;
 import com.example.Diary.Dto.Diary.DiaryResponseDto;
 import com.example.Diary.Entity.DiaryEntity;
@@ -22,9 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -36,6 +35,7 @@ public class DiaryServiceImpl implements DiaryService{
     /**
      * 다이어리 - 다이어리 작성 (날씨 API / 이미지 첨부)
      * @param dto DiaryRequestDto.writeDiary
+     * @param userId Long
      * @return ApiResponse<DiaryResponseDto.writeDiary>
      */
     @Override
@@ -70,6 +70,7 @@ public class DiaryServiceImpl implements DiaryService{
     /**
      * 다이어리 - 작성한 다이어리 수정
      * @param dto DiaryRequestDto.updateDiary
+     * @param userId Long
      * @return ApiResponse<DiaryResponseDto.updateDiary>
      */
     @Override
@@ -110,6 +111,7 @@ public class DiaryServiceImpl implements DiaryService{
     /**
      * 다이어리 - 작성한 다이어리 삭제
      * @param dto DiaryRequestDto.deleteDiary
+     * @param userId Long
      * @return DiaryResponseDto.deleteDiary
      */
     @Override
@@ -138,22 +140,34 @@ public class DiaryServiceImpl implements DiaryService{
 
     /**
      * 다이어리 - 열람가능한 다이어리 리스트 조회
-     * @param dto DiaryRequestDto.diaryList
+     * @param userId Long
      * @return DiaryResponseDto.diaryList
      */
     @Override
-    public ApiResponse<?> diaryList(DiaryRequestDto.diaryList dto, Long userId) {
-        // 1. 사용자가 팔로우한 목록 확인
+    public ApiResponse<?> canViewDiaryList(Long userId) {
+        // 1. 본인 및 팔로우한 사람이 작성한 사람에 해당하는 데이터 가져오기
+        List<DiaryEntity> canViewDiaryList = diaryRepository.canViewDiaryList(userId);
 
-        // 2. 본인 및 팔로우한 사람이 작성한 사람에 해당하는 데이터 가져오기
+        // 2. entity 데이터 dto 로 전환
+        List<DiaryDto> diaryDtoList = new ArrayList<>();
+        for (DiaryEntity entity: canViewDiaryList){
+            DiaryDto diaryDto = new DiaryDto(entity);
 
-        // 3. entity 데이터 dto 로 전환
-        return null;
+            // 2-1. 이미지가 있는 경우, 이미지 첨부
+
+            diaryDtoList.add(diaryDto);
+        }
+
+        return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
+                DiaryResponseDto.canViewDiaryList.builder()
+                        .diaryList(diaryDtoList)
+                        .build());
     }
 
     /**
      * 다이어리 - 상세읽기 ( 권한 설정 - 비공개, 전체공개, 일부공개 )
      * @param dto DiaryRequestDto.diaryContent
+     * @param userId Long
      * @return DiaryResponseDto.diaryContent
      */
     @Override

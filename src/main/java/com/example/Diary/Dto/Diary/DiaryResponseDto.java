@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 public class DiaryResponseDto {
@@ -27,11 +28,9 @@ public class DiaryResponseDto {
         private Double tempMax;
     }
     @Getter
-    public static class deleteDiary{
-
-    }
-    @Getter
-    public static class diaryList{
+    @Builder
+    public static class canViewDiaryList{
+        private List<DiaryDto> diaryList;
 
     }
     @Getter

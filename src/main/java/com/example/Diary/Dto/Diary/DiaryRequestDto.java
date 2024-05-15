@@ -54,10 +54,6 @@ public class DiaryRequestDto {
         private Long diaryId;
     }
     @Data
-    public static class diaryList{
-
-    }
-    @Data
     public static class diaryContent{
 
     }
