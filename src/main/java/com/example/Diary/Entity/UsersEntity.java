@@ -1,14 +1,18 @@
 package com.example.Diary.Entity;
 
+import com.example.Diary.Dto.Users.UsersRequestDTO.UsersSignUpRequestDTO;
+import com.example.Diary.Dto.Users.UsersRequestDTO.UsersUpdateRequestDTO;
 import com.example.Diary.Entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Entity
 @Getter
-public class UsersEntity extends BaseEntity{
+@NoArgsConstructor
+public class UsersEntity extends BaseEntity {
     @Id
     @GeneratedValue
     @Column(name = "users_id")
@@ -19,9 +23,35 @@ public class UsersEntity extends BaseEntity{
     private String birthday;    // 생일
 
 
-//    @ManyToOne
-//    @JoinColumn(name = "region_id")
-//    private Region region;
+    public UsersEntity(String usersEmail, String usersPassword, String usersNickname, String birthday) {
+        this.usersEmail = usersEmail;
+        this.usersPassword = usersPassword;
+        this.usersNickname = usersNickname;
+        this.birthday = birthday;
+    }
+
+    public void usersUpdate(UsersUpdateRequestDTO updateRequestDTO){
+        if (updateRequestDTO.getUsersEmail() != null) {
+            this.usersEmail = updateRequestDTO.getUsersEmail();
+        }
+        if (updateRequestDTO.getUsersPassword() != null) {
+            this.usersPassword = updateRequestDTO.getUsersPassword();
+        }
+        if (updateRequestDTO.getUsersNickname() != null) {
+            this.usersNickname = updateRequestDTO.getUsersNickname();
+        }
+        if (updateRequestDTO.getBirthday() != null) {
+            this.birthday = updateRequestDTO.getBirthday();
+        }
+    }
+
+
+}
+
+    /*
+    @ManyToOne
+    @JoinColumn(name = "region_id")
+    private Region region;
 
     @OneToMany(mappedBy = "usersEntity", fetch = FetchType.LAZY)
     private List<Viewer> viewerList;
@@ -31,4 +61,7 @@ public class UsersEntity extends BaseEntity{
 
     @OneToMany(mappedBy = "resUsersEntity", fetch = FetchType.LAZY)
     private List<Follow> resFollowList;
-}
+
+
+
+*/
