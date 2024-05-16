@@ -32,6 +32,7 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class DiaryServiceImpl implements DiaryService{
     private final UsersRepository usersRepository;
     private final DiaryRepository diaryRepository;
@@ -179,7 +180,7 @@ public class DiaryServiceImpl implements DiaryService{
      * 다이어리 - 상세읽기 ( 권한 설정 - 비공개, 전체공개, 일부공개 )
      * @param dto DiaryRequestDto.diaryContent
      * @param userId Long
-     * @return DiaryResponseDto.diaryContent
+     * @return ApiResponse<DiaryResponseDto.diaryContent>
      */
     @Override
     public ApiResponse<?> diaryContent(DiaryRequestDto.diaryContent dto, Long userId) {
@@ -225,6 +226,44 @@ public class DiaryServiceImpl implements DiaryService{
                     new DiaryResponseDto.diaryContent(diary));
     }
 
+    @Override
+    @Transactional
+    public ApiResponse<?> viewsCnt(DiaryRequestDto.viewsCnt dto, Long userId) {
+        // 1. 존재하는 user인지 확인
+        Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
+        if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
+        UsersEntity users = usersOpt.get();
+
+        // 2. 존재하는 diary인지 확인
+        Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
+        if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
+            return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
+        DiaryEntity diary = diaryOpt.get();
+
+        // 3. diary 조회수 카운트
+        diary.viewsCnt();
+
+        return ApiResponse.SUCCESS(200, "조회가 반영되었습니다.",
+                DiaryResponseDto.viewsCnt.builder()
+                        .viewsCnt(diary.getViewsCnt())
+                        .build());
+    }
+
+    @Override
+    public ApiResponse<?> doLikeIt(DiaryRequestDto.doLikeIt dto, Long userId) {
+        return null;
+    }
+
+
+
+
+
+
+
+
+    /* ===============================================================================================
+     * private 공통 코드 모음
+     * ===============================================================================================*/
 
     // DB에 저장할 날씨 데이터 생성
     private Map<String, Object> setWeatherData(String locationName, int year, int month, int day) throws ParseException {

@@ -76,4 +76,17 @@ public class DiaryController {
         Long userId = (Long) session.getAttribute("userId");
         return ResponseEntity.ok().body(diaryService.diaryContent(dto, userId));
     }
+
+    /**
+     * 다이어리 - 조회수 카운트
+     * @param dto DiaryRequestDto.viewsCnt
+     * @param request HttpServletRequest
+     * @return ResponseEntity<?>
+     */
+    @PostMapping("/viewsCnt")
+    public ResponseEntity<?> viewsCnt(@RequestBody DiaryRequestDto.viewsCnt dto, HttpServletRequest request){
+        HttpSession session = request.getSession(false);
+        Long userId = (Long) session.getAttribute("userId");
+        return ResponseEntity.ok().body(diaryService.viewsCnt(dto, userId));
+    }
 }

@@ -57,4 +57,12 @@ public class DiaryRequestDto {
     public static class diaryContent{
         private Long diaryId;
     }
+    @Data
+    public static class viewsCnt{
+        private Long diaryId;
+    }
+    @Data
+    public static class doLikeIt{
+        private Long diaryId;
+    }
 }

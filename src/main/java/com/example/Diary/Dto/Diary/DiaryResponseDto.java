@@ -62,6 +62,12 @@ public class DiaryResponseDto {
 
     }
 
+    @Getter
+    @Builder
+    public static class viewsCnt {
+        private int viewsCnt;
+    }
+
 
     //다이어리 리스트 반환
     @Getter
@@ -71,7 +77,5 @@ public class DiaryResponseDto {
 
             this.diaryDtoList = diaryDtoList;
         }
-
-
     }
 }
