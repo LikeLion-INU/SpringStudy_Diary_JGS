@@ -89,4 +89,17 @@ public class DiaryController {
         Long userId = (Long) session.getAttribute("userId");
         return ResponseEntity.ok().body(diaryService.viewsCnt(dto, userId));
     }
+
+    /**
+     * 다이어리 - 좋아요 기능
+     * @param dto DiaryRequestDto.doLikeIt
+     * @param request HttpServletRequest
+     * @return ResponseEntity<?>
+     */
+    @PostMapping("/doLikeIt")
+    public ResponseEntity<?> doLikeIt(@RequestBody DiaryRequestDto.doLikeIt dto, HttpServletRequest request){
+        HttpSession session = request.getSession(false);
+        Long userId = (Long) session.getAttribute("userId");
+        return ResponseEntity.ok().body(diaryService.doLikeIt(dto, userId));
+    }
 }

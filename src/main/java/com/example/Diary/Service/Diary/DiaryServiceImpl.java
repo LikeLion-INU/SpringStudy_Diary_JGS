@@ -3,12 +3,10 @@ package com.example.Diary.Service.Diary;
 import com.example.Diary.Dto.Diary.DiaryDto;
 import com.example.Diary.Dto.Diary.DiaryRequestDto;
 import com.example.Diary.Dto.Diary.DiaryResponseDto;
-import com.example.Diary.Entity.DiaryEntity;
-import com.example.Diary.Entity.Follow;
-import com.example.Diary.Entity.UsersEntity;
-import com.example.Diary.Entity.Viewer;
+import com.example.Diary.Entity.*;
 import com.example.Diary.Repository.DiaryRepository;
 import com.example.Diary.Repository.FollowRepository;
+import com.example.Diary.Repository.LikeitRepository;
 import com.example.Diary.Repository.Users.UsersRepository;
 import com.example.Diary.Repository.ViewerRepository;
 import com.example.Diary.common.ApiResponse;
@@ -38,6 +36,7 @@ public class DiaryServiceImpl implements DiaryService{
     private final DiaryRepository diaryRepository;
     private final FollowRepository followRepository;
     private final ViewerRepository viewerRepository;
+    private final LikeitRepository likeitRepository;
 
     /**
      * 다이어리 - 다이어리 작성 (날씨 API / 이미지 첨부)
@@ -46,6 +45,7 @@ public class DiaryServiceImpl implements DiaryService{
      * @return ApiResponse<DiaryResponseDto.writeDiary>
      */
     @Override
+    @Transactional
     public ApiResponse<DiaryResponseDto.writeDiary> writeDiary(DiaryRequestDto.writeDiary dto, Long userId) throws ParseException {
         // 1. 존재하는 user인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
@@ -249,9 +249,34 @@ public class DiaryServiceImpl implements DiaryService{
                         .build());
     }
 
+    /**
+     * 다이어리 - 좋아요 기능
+     * @param dto DiaryRequestDto.doLikeIt
+     * @param userId Long
+     * @return ApiResponse<?>
+     */
     @Override
+    @Transactional
     public ApiResponse<?> doLikeIt(DiaryRequestDto.doLikeIt dto, Long userId) {
-        return null;
+        // 1. 존재하는 user인지 확인
+        Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
+        if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
+        UsersEntity users = usersOpt.get();
+
+        // 2. 존재하는 diary인지 확인
+        Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
+        if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
+            return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
+        DiaryEntity diary = diaryOpt.get();
+
+        // 3. like it 생성
+        LikeitEntity likeitEntity = LikeitEntity.builder()
+                .diary(diary)
+                .users(users)
+                .build();
+        likeitRepository.save(likeitEntity);
+
+        return ApiResponse.SUCCESS(200, "좋아요가 반영되었습니다.");
     }
 
 
