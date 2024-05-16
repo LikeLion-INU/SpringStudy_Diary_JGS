@@ -8,8 +8,8 @@ import lombok.Data;
 //로그인 DTO
 public class UsersLoginRequestDTO {
 
-    private String usersEmail; // 이메일
-    private String usersPassword; // 비밀번호
+    private String userEmail; // 이메일
+    private String userPassword; // 비밀번호
 
 
 

@@ -1,11 +1,19 @@
 package com.example.Diary.Service.Users;
 
+import com.example.Diary.Dto.Diary.DiaryDto;
+import com.example.Diary.Dto.Diary.DiaryRequestDto;
+import com.example.Diary.Dto.Diary.DiaryResponseDto;
 import com.example.Diary.Dto.Users.UsersRequestDTO.UsersLoginRequestDTO;
 import com.example.Diary.Dto.Users.UsersRequestDTO.UsersSignUpRequestDTO;
 import com.example.Diary.Dto.Users.UsersRequestDTO.UsersUpdateRequestDTO;
 import com.example.Diary.Dto.Users.UsersResponseDTO.UsersInfoResponseDTO;
+import com.example.Diary.Entity.DiaryEntity;
 import com.example.Diary.Entity.UsersEntity;
+import com.example.Diary.Repository.DiaryRepository;
+import com.example.Diary.Repository.FollowRepository;
 import com.example.Diary.Repository.Users.UsersRepository;
+import com.example.Diary.Repository.ViewerRepository;
+import com.example.Diary.common.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -24,11 +34,14 @@ public class UsersServicelmpl implements UsersService{
 
     private final UsersRepository usersRepository;
     private final HttpSession httpSession;
+    private final DiaryRepository diaryRepository;
+    private final FollowRepository followRepository;
+    private final ViewerRepository viewerRepository;
 
     public UsersInfoResponseDTO signUp(UsersSignUpRequestDTO signUpRequestDTO) {
         log.info("[UsersServiceImpl] signUp");
         UsersEntity usersEntity = signUpRequestDTO.toEntity();
-        Optional<UsersEntity> optionalFindMember = usersRepository.findByUsersEmail(usersEntity.getUsersEmail());
+        Optional<UsersEntity> optionalFindMember = usersRepository.findByUserEmail(usersEntity.getUserEmail());
         if (optionalFindMember.isPresent()) {
             // 중복 이메일 발생
             log.info("[ERROR] 중복 이메일 입니다.");
@@ -39,14 +52,14 @@ public class UsersServicelmpl implements UsersService{
     }
     public UsersInfoResponseDTO login(UsersLoginRequestDTO loginRequestDTO) {
         log.info("[UsersServiceImpl] login");
-        Optional<UsersEntity> optionalFindMember = usersRepository.findByUsersEmail(loginRequestDTO.getUsersEmail()); // DB에서 회원 조회
+        Optional<UsersEntity> optionalFindMember = usersRepository.findByUserEmail(loginRequestDTO.getUserEmail()); // DB에서 회원 조회
 
 
         if (optionalFindMember.isEmpty()) {
             // 존재하지 않은 이메일
             log.info("[ERROR] 존재하지 않은 이메일 입니다.");
             return null;
-        } else if (!Objects.equals(loginRequestDTO.getUsersPassword(), optionalFindMember.get().getUsersPassword())) {
+        } else if (!Objects.equals(loginRequestDTO.getUserPassword(), optionalFindMember.get().getUserPassword())) {
             // 틀린 비밀번호
             return null;
         }
@@ -56,7 +69,7 @@ public class UsersServicelmpl implements UsersService{
         return new UsersInfoResponseDTO(optionalFindMember.get());
     }
 
-    public UsersInfoResponseDTO logout(HttpServletRequest request, long usersId) {
+    public UsersInfoResponseDTO logout(HttpServletRequest request, long userId) {
 
         HttpSession session = request.getSession(false);
         if (session != null){
@@ -64,7 +77,7 @@ public class UsersServicelmpl implements UsersService{
             log.info("session invalidated {}", session.getId());
         }
 
-        Optional<UsersEntity> optionalFindMember = usersRepository.findById(usersId); // DB에서 회원 조회
+        Optional<UsersEntity> optionalFindMember = usersRepository.findById(userId); // DB에서 회원 조회
 
         if (optionalFindMember.isEmpty()) {
             log.info("[ERROR] 존재하지 않은 회원 입니다.");
@@ -72,10 +85,10 @@ public class UsersServicelmpl implements UsersService{
         }
         return new UsersInfoResponseDTO(optionalFindMember.get());
     }
-    public String delete(Long usersId) {
+    public String delete(Long userId) {
 
         log.info("[UsersServiceImpl] delete");
-        Optional<UsersEntity> optionalFindMember = usersRepository.findById(usersId);
+        Optional<UsersEntity> optionalFindMember = usersRepository.findById(userId);
 
         if (optionalFindMember.isEmpty()) {
             // 존재하지 않은 이메일
@@ -87,8 +100,8 @@ public class UsersServicelmpl implements UsersService{
         log.info("[Deleting User] ID: {}", userToDelete.getId());
 
 
-        usersRepository.deleteById(usersId); // DB에서 회원 삭제
-        log.info("[User Deletion Successful] ID: {}", usersId);
+        usersRepository.deleteById(userId); // DB에서 회원 삭제
+        log.info("[User Deletion Successful] ID: {}", userId);
 
         return "SUCCESS";
     }
@@ -96,11 +109,11 @@ public class UsersServicelmpl implements UsersService{
 
 
     //
-    public UsersInfoResponseDTO findOne(Long usersId) {
+    public UsersInfoResponseDTO findOne(Long userId) {
 
         log.info("[UsersServiceImpl] findOne");
 
-        Optional<UsersEntity> optionalFindMember = usersRepository.findById(usersId); // DB에서 회원 조회
+        Optional<UsersEntity> optionalFindMember = usersRepository.findById(userId); // DB에서 회원 조회
 
         if (optionalFindMember.isEmpty()) {
             // 존재하지 않은 이메일
@@ -116,9 +129,9 @@ public class UsersServicelmpl implements UsersService{
     @Transactional
     public UsersInfoResponseDTO update(UsersUpdateRequestDTO updateRequestDTO, Long userId) {
         log.info("[Updated User Information] Email: {}, Password: {}, Nickname: {}, Birthday: {}",
-                updateRequestDTO.getUsersEmail(),
-                updateRequestDTO.getUsersPassword(),
-                updateRequestDTO.getUsersNickname(),
+                updateRequestDTO.getUserEmail(),
+                updateRequestDTO.getUserPassword(),
+                updateRequestDTO.getUserNickname(),
                 updateRequestDTO.getBirthday());
 
 
@@ -133,9 +146,9 @@ public class UsersServicelmpl implements UsersService{
         userToUpdate.usersUpdate(updateRequestDTO); // 엔티티 업데이트
 
         log.info("[Updated User Information] Email: {}, Password: {}, Nickname: {}, Birthday: {}",
-                updateRequestDTO.getUsersEmail(),
-                updateRequestDTO.getUsersPassword(),
-                updateRequestDTO.getUsersNickname(),
+                updateRequestDTO.getUserEmail(),
+                updateRequestDTO.getUserPassword(),
+                updateRequestDTO.getUserNickname(),
                 updateRequestDTO.getBirthday());
 
         // 변경된 엔티티를 데이터베이스에 저장
@@ -149,6 +162,27 @@ public class UsersServicelmpl implements UsersService{
 
 
     }
+
+    public DiaryResponseDto.DiaryListDto userDiary(Long userId) {
+
+        log.info("[TodoServiceImpl] findAll");
+        //회원 id 기준 엔티티리스트에 디비에서 받아오기
+        List<DiaryEntity> diaryEntityList = diaryRepository.findAllByUsersId(userId);
+        //반환 할 디티오리스트 생성
+
+        List<DiaryDto> diaryDtoList = new ArrayList<>();
+
+        for (DiaryEntity diaryEntity : diaryEntityList) {
+            DiaryDto diaryDto = new DiaryDto(diaryEntity);
+            diaryDtoList.add(diaryDto);
+
+        }
+        // DiaryListDto 생성 후 반환
+        return new DiaryResponseDto.DiaryListDto(diaryDtoList);
+
+
+    }
+
 
 
 

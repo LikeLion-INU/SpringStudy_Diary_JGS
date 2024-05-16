@@ -7,12 +7,12 @@ import lombok.Data;
 //회원가입 DTO
 public class UsersSignUpRequestDTO {
 
-    private String usersEmail; // 이메일
-    private String usersPassword; // 비밀번호
-    private String usersNickname; // 닉네임
+    private String userEmail; // 이메일
+    private String userPassword; // 비밀번호
+    private String userNickname; // 닉네임
     private String birthday;    // 생일
 
     public UsersEntity toEntity() { // DTO를 Member 엔티티로 변환하는 메소드
-        return new UsersEntity(this.usersEmail, this.usersPassword, this.usersNickname, this.birthday);
+        return new UsersEntity(this.userEmail, this.userPassword, this.userNickname, this.birthday);
     }
 }
