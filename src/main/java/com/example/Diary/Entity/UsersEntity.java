@@ -15,30 +15,30 @@ import java.util.List;
 public class UsersEntity extends BaseEntity {
     @Id
     @GeneratedValue
-    @Column(name = "users_id")
+    @Column(name = "user_id")
     private Long id; // 고유 식별자
-    private String usersEmail; // 이메일
-    private String usersPassword; // 비밀번호
-    private String usersNickname; // 닉네임
+    private String userEmail; // 이메일
+    private String userPassword; // 비밀번호
+    private String userNickname; // 닉네임
     private String birthday;    // 생일
 
 
-    public UsersEntity(String usersEmail, String usersPassword, String usersNickname, String birthday) {
-        this.usersEmail = usersEmail;
-        this.usersPassword = usersPassword;
-        this.usersNickname = usersNickname;
+    public UsersEntity(String userEmail, String userPassword, String userNickname, String birthday) {
+        this.userEmail = userEmail;
+        this.userPassword = userPassword;
+        this.userNickname = userNickname;
         this.birthday = birthday;
     }
 
     public void usersUpdate(UsersUpdateRequestDTO updateRequestDTO){
-        if (updateRequestDTO.getUsersEmail() != null) {
-            this.usersEmail = updateRequestDTO.getUsersEmail();
+        if (updateRequestDTO.getUserEmail() != null) {
+            this.userEmail = updateRequestDTO.getUserEmail();
         }
-        if (updateRequestDTO.getUsersPassword() != null) {
-            this.usersPassword = updateRequestDTO.getUsersPassword();
+        if (updateRequestDTO.getUserPassword() != null) {
+            this.userPassword = updateRequestDTO.getUserPassword();
         }
-        if (updateRequestDTO.getUsersNickname() != null) {
-            this.usersNickname = updateRequestDTO.getUsersNickname();
+        if (updateRequestDTO.getUserNickname() != null) {
+            this.userNickname = updateRequestDTO.getUserNickname();
         }
         if (updateRequestDTO.getBirthday() != null) {
             this.birthday = updateRequestDTO.getBirthday();

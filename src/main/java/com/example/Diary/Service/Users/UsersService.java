@@ -1,5 +1,7 @@
 package com.example.Diary.Service.Users;
 
+import com.example.Diary.Dto.Diary.DiaryRequestDto;
+import com.example.Diary.Dto.Diary.DiaryResponseDto;
 import com.example.Diary.Dto.Users.UsersRequestDTO.UsersLoginRequestDTO;
 import com.example.Diary.Dto.Users.UsersRequestDTO.UsersSignUpRequestDTO;
 import com.example.Diary.Dto.Users.UsersRequestDTO.UsersUpdateRequestDTO;
@@ -20,4 +22,6 @@ public interface UsersService {
     UsersInfoResponseDTO findOne(Long userId);
 
     UsersInfoResponseDTO update(UsersUpdateRequestDTO updateRequestDTO, Long userId);
+
+    DiaryResponseDto.DiaryListDto userDiary(Long userId);
 }

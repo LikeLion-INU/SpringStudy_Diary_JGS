@@ -1,5 +1,6 @@
 package com.example.Diary.Controller;
 
+import com.example.Diary.Dto.Diary.DiaryResponseDto;
 import com.example.Diary.Dto.Users.UsersRequestDTO.UsersLoginRequestDTO;
 import com.example.Diary.Dto.Users.UsersRequestDTO.UsersSignUpRequestDTO;
 import com.example.Diary.Dto.Users.UsersRequestDTO.UsersUpdateRequestDTO;
@@ -98,9 +99,9 @@ public class UsersController {
 
         log.info("[UsersController] update");
         log.info("[Updated User controller] Email: {}, Password: {}, Nickname: {}, Birthday: {}",
-                updateRequestDTO.getUsersEmail(),
-                updateRequestDTO.getUsersPassword(),
-                updateRequestDTO.getUsersNickname(),
+                updateRequestDTO.getUserEmail(),
+                updateRequestDTO.getUserPassword(),
+                updateRequestDTO.getUserNickname(),
                 updateRequestDTO.getBirthday());
 
         Long userId = (Long) httpSession.getAttribute("userId");
@@ -108,6 +109,18 @@ public class UsersController {
 
         return ResponseEntity.ok().body(ApiResponse.SUCCESS(HttpStatus.CREATED.value(),"users update success",result));
 
+
+    }
+
+    //유저가 작성한 다이어리 확인
+    @PostMapping("/userDiary")
+    public ResponseEntity<?> userDiary(HttpSession httpSession) {
+
+        Long userId = (Long) httpSession.getAttribute("userId");
+        log.info("Session userId: {}", userId);
+
+        DiaryResponseDto.DiaryListDto result = usersService.userDiary(userId);
+        return ResponseEntity.ok().body(ApiResponse.SUCCESS(HttpStatus.CREATED.value(), "user's diary success", result));
 
     }
 

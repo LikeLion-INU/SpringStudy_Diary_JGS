@@ -1,6 +1,7 @@
 package com.example.Diary.Dto.Diary;
 
 import com.example.Diary.Entity.DiaryEntity;
+import com.example.Diary.Entity.UsersEntity;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -57,5 +58,20 @@ public class DiaryResponseDto {
             this.contents = entity.getContents();
             this.photoYn = entity.getPhotoYn();
         }
+
+
+    }
+
+
+    //다이어리 리스트 반환
+    @Getter
+    public static class DiaryListDto {
+        private List<DiaryDto> diaryDtoList;
+        public DiaryListDto(List<DiaryDto> diaryDtoList) {
+
+            this.diaryDtoList = diaryDtoList;
+        }
+
+
     }
 }

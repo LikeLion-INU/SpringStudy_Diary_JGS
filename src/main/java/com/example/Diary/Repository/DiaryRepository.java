@@ -8,6 +8,9 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface DiaryRepository extends JpaRepository<DiaryEntity, Long> {
+
+    List<DiaryEntity> findAllByUsersId(Long id);
+
     @Query(value = "select de.* "+
             "from diary_entity de "+
             "left outer join follow f  "+
