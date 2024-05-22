@@ -3,10 +3,16 @@ package com.example.Diary.Entity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@Builder
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
 public class Viewer extends BaseEntity{
     @ManyToOne
     @JoinColumn(name="diary_id")

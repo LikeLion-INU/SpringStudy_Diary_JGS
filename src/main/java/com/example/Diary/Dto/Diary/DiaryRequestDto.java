@@ -21,6 +21,8 @@ public class DiaryRequestDto {
         private String contents;    //내용
         private int photoYn;  //사진유무 (0:X 1:O)
 
+        private String userSeqBundle;   // 일부공개의 경우의 사용자 구분자값 ,로 구분하여 문자열로 전달
+
         public DiaryEntity toEntity(Map<String,Object> weather, UsersEntity users){
             return DiaryEntity.builder()
                     .publicState(this.publicState)
@@ -48,6 +50,7 @@ public class DiaryRequestDto {
         private String contents;    //내용
         private int photoYn;        //사진유무 (0:X 1:O)
 
+        private String userSeqBundle;   // 일부공개의 경우의 사용자 구분자값 ,로 구분하여 문자열로 전달
     }
     @Data
     public static class deleteDiary{

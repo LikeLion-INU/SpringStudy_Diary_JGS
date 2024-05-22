@@ -61,6 +61,8 @@ public class DiaryServiceImpl implements DiaryService{
         Long diaryId = diaryRepository.save(diaryEntity).getId();
 
         // 4. 일부 공개의 경우, 열람 가능한 리스트 저장
+        if (dto.getPublicState() == 2)
+            viewerInsert(dto.getUserSeqBundle(), diaryEntity);
 
         // 5. 사진이 존재하는 경우, 사진 데이터 저장
 
@@ -98,11 +100,18 @@ public class DiaryServiceImpl implements DiaryService{
         Map<String, Object> weather = setWeatherData(
                 dto.getLocationName(),dto.getYear(), dto.getMonth(), dto.getDay());
 
-        // 4. 공개정도에 따른 열람가능 로우 삭제 또는 생성, update
+        // 4. 수정 전 공개도가 일부공개인 경우, viewer 삭제
+        if (diary.getPublicState() == 2) {
+            viewerDelete(diary.getId());
+        }
 
-        // 5. 사진이 존재여부에 따른 사진 데이터 삭제 또는 저장
+        // 5. 수정 후 공개도가 일부공개인 경우, viewer 등록
+        if (dto.getPublicState() == 2)
+            viewerInsert(dto.getUserSeqBundle(), diary);
 
-        // 6. 데이터 수정
+        // 6. 사진이 존재여부에 따른 사진 데이터 삭제 또는 저장
+
+        // 7. 데이터 수정
         diary.updateDiary(dto, weather);
 
         return ApiResponse.SUCCESS(200, "수정되었습니다.",
@@ -137,7 +146,9 @@ public class DiaryServiceImpl implements DiaryService{
 
         // 3. 사진 데이터 확인 후 삭제
 
+
         // 4. 열람 가능 사용자 로우 확인후 삭제
+        viewerDelete(diary.getId());
 
         // 5. diary 삭제
         diaryRepository.delete(diary);
@@ -194,11 +205,19 @@ public class DiaryServiceImpl implements DiaryService{
         if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
             return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
         DiaryEntity diary = diaryOpt.get();
+        List<DiaryResponseDto.viewerList> viewerListDto = new ArrayList<>();
+
+        // 2-1. 일부공개의 경우, 공개 설정된 유저 정보 넘겨주기
+        if (diary.getPublicState() == 2) {
+            List<Viewer> viewerList = viewerRepository.findByDiaryEntity_Id(diary.getId());
+            for (Viewer entity : viewerList)
+                viewerListDto.add(new DiaryResponseDto.viewerList(entity.getUsersEntity()));
+        }
 
         // 3. 본인이 작성한 diary인지 확인
         if (userId.equals(diary.getUsers().getId()))
             return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
-                    new DiaryResponseDto.diaryContent(diary));
+                    new DiaryResponseDto.diaryContent(diary, viewerListDto));
 
         // 4. 비공개 상태인지 확인
         if(diary.getPublicState() == 1)
@@ -214,16 +233,17 @@ public class DiaryServiceImpl implements DiaryService{
         // 6. 전체 공개 상태인지 확인
         if(diary.getPublicState() == 0)
             return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
-                    new DiaryResponseDto.diaryContent(diary));
+                    new DiaryResponseDto.diaryContent(diary,viewerListDto));
 
         // 7. 일부공개 권한이 있는 viewer인지 확인
         Optional<Viewer> viewerOpt = viewerRepository
                 .findByDiaryEntity_IdAndUsersEntity_Id(diary.getId(), userId);
+
         if(viewerOpt.isEmpty())
             return ApiResponse.ERROR(401, "열람 불가능한 diary 입니다.");
         else
             return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
-                    new DiaryResponseDto.diaryContent(diary));
+                    new DiaryResponseDto.diaryContent(diary, viewerListDto));
     }
 
     @Override
@@ -384,5 +404,31 @@ public class DiaryServiceImpl implements DiaryService{
 
         return result;
     }
+
+    // 일부 공개의 경우, 열람 가능한 리스트 저장
+    private void viewerInsert(String userSeqBundle, DiaryEntity diaryEntity){
+        // 1. 문자열 , 단위로 구분하여 배열 생성
+        String[] userSeqArray = userSeqBundle.split(",");
+        List<Viewer> viewerList = new ArrayList<>();
+
+        // 2. viewer 리스트 생성
+        for (String userSeqStr : userSeqArray) {
+            viewerList.add(Viewer.builder()
+                    .diaryEntity(diaryEntity)
+                    .usersEntity(new UsersEntity(Long.parseLong(userSeqStr)))
+                    .build());
+        }
+
+        // 3. viewer 저장
+        if (!viewerList.isEmpty())
+            viewerRepository.saveAll(viewerList);
+    }
+
+    // 일부공개 시 열람 가능 사용자 로우 확인후 삭제
+    private void viewerDelete(Long id){
+        List<Viewer> beforeViewers = viewerRepository.findByDiaryEntity_Id(id);
+        viewerRepository.deleteAll(beforeViewers);
+    }
+
 }
 
