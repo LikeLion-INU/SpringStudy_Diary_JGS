@@ -49,7 +49,7 @@ public class DiaryEntity extends BaseEntity{
 
 
     // 다이어리 수정
-    public void updateDiary( DiaryRequestDto.updateDiary dto, Map<String, Object> weather){
+    public void updateDiary( DiaryRequestDto.updateDiary dto, Map<String, Object> weather, Long imgCnt){
         this.publicState = dto.getPublicState();
         this.recordDate = LocalDate.of(dto.getYear(), dto.getMonth(), dto.getDay());
         this.weather = (String) weather.get("weather");
@@ -57,7 +57,7 @@ public class DiaryEntity extends BaseEntity{
         this.tempMax = (Double) weather.get("tempMax");
         this.title = dto.getTitle();
         this.contents = dto.getContents();
-        this.photoYn = dto.getPhotoYn();
+        this.photoYn = imgCnt > 0 ? 1 : 0;
     }
 
     // 조회수 카운트

@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,12 +32,11 @@ public class FileUploadUtils {
     private PhotoFileRepository photoFileRepository;
 
     /**
-     * 이미지 업로드(저장)
-     * @param diaryEntity - 이미지를 등록한 다이어리 Entity
-     * @param files - 파일 배열
-     * @return entities to save
+     * 이미지 업로드 (저장)
+     * @param diaryEntity - DiaryEntity : 이미지를 등록한 다이어리 Entity
+     * @param files - MultipartFile[] : 파일 배열
      */
-    public List<PhotoFile> uploadFiles(DiaryEntity diaryEntity, MultipartFile[] files) {
+    public void uploadFiles(DiaryEntity diaryEntity, MultipartFile[] files) {
 
         // 1. uploadPath(archive)에 해당하는 디렉터리가 존재하지 않는 경우, 부모 디렉터리를 포함한 모든 디렉터리를 생성
         File dir = new File(archive);
@@ -77,7 +77,34 @@ public class FileUploadUtils {
         }
 
         photoFileRepository.saveAll(fileList);
-        return fileList;
+    }
+
+    /**
+     * 파일 삭제
+     * @param fileSeq - Long : 삭제하려는 파일 시퀀스 넘버
+     */
+    public void deleteFile(Long fileSeq) {
+
+        // 1. 삭제 요청한 데이터가 있는지 확인
+        PhotoFile fileEntity = photoFileRepository.findById(fileSeq)
+                .orElseThrow(() -> new CustomException(ErrorCode.FILE_NOT_FOUND));
+
+        // 2. 업로드된 파일 경로 획득
+        String uploadedFilePath = Paths.get(archive, fileEntity.getFileUuid()).toString();
+
+        // 3. 파일 찾기
+        File file = new File(uploadedFilePath);
+
+        // 4. 파일 및 DB 정보 삭제
+        if (file.exists()) {
+            boolean deleteRe = file.delete();
+            // 파일이 삭제되면, DB 에서 정보 삭제
+            if (deleteRe) photoFileRepository.delete(fileEntity);
+        }else {
+            log.debug("FILE NOT FOUND");
+            log.debug("savedFilename : {}", fileEntity.getFileUuid());
+            photoFileRepository.delete(fileEntity);
+        }
     }
 
 

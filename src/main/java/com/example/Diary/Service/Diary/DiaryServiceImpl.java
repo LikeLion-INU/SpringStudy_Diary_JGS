@@ -4,11 +4,8 @@ import com.example.Diary.Dto.Diary.DiaryDto;
 import com.example.Diary.Dto.Diary.DiaryRequestDto;
 import com.example.Diary.Dto.Diary.DiaryResponseDto;
 import com.example.Diary.Entity.*;
-import com.example.Diary.Repository.DiaryRepository;
-import com.example.Diary.Repository.FollowRepository;
-import com.example.Diary.Repository.LikeitRepository;
+import com.example.Diary.Repository.*;
 import com.example.Diary.Repository.Users.UsersRepository;
-import com.example.Diary.Repository.ViewerRepository;
 import com.example.Diary.common.ApiResponse;
 import com.example.Diary.common.FileUploadUtils;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +35,7 @@ public class DiaryServiceImpl implements DiaryService{
     private final FollowRepository followRepository;
     private final ViewerRepository viewerRepository;
     private final LikeitRepository likeitRepository;
+    private final PhotoFileRepository photoFileRepository;
 
     private final FileUploadUtils fileUploadUtils;
 
@@ -68,9 +66,8 @@ public class DiaryServiceImpl implements DiaryService{
             viewerInsert(dto.getUserSeqBundle(), diaryEntity);
 
         // 5. 사진이 존재하는 경우, 사진 데이터 저장
-        if (dto.getPhotoYn() == 1) {
-            List<PhotoFile> savePhotoFile = fileUploadUtils.uploadFiles(diaryEntity, dto.getPhotoFiles());
-        }
+        if (dto.getPhotoFiles().length > 0)
+            fileUploadUtils.uploadFiles(diaryEntity, dto.getPhotoFiles());
 
         return ApiResponse.SUCCESS(200, "저장되었습니다.",
                 DiaryResponseDto.writeDiary.builder()
@@ -106,19 +103,27 @@ public class DiaryServiceImpl implements DiaryService{
                 dto.getLocationName(),dto.getYear(), dto.getMonth(), dto.getDay());
 
         // 4. 수정 전 공개도가 일부공개인 경우, viewer 삭제
-        if (diary.getPublicState() == 2) {
+        if (diary.getPublicState() == 2)
             viewerDelete(diary.getId());
-        }
 
         // 5. 수정 후 공개도가 일부공개인 경우, viewer 등록
         if (dto.getPublicState() == 2)
             viewerInsert(dto.getUserSeqBundle(), diary);
 
-        // 6. 사진이 존재여부에 따른 사진 데이터 삭제 또는 저장
+        // 6. 삭제된 이미지가 있는 경우, 삭제
+        String[] delPhotoSeqArray = dto.getDelPhotoSeqBundle().split(",");
+        for (String delPhotoSeq : delPhotoSeqArray)
+            fileUploadUtils.deleteFile(Long.parseLong(delPhotoSeq));
 
-        // 7. 데이터 수정
-        diary.updateDiary(dto, weather);
+        // 7. 새로 추가되는 이미지가 있는 경우
+        if (dto.getPhotoFiles().length > 0)
+            fileUploadUtils.uploadFiles(diary, dto.getPhotoFiles());
 
+        // 8. 데이터 수정
+        Long imgCnt = photoFileRepository.countAllByDiaryEntity_Id(diary.getId());
+        diary.updateDiary(dto, weather, imgCnt);
+
+        // 9. return
         return ApiResponse.SUCCESS(200, "수정되었습니다.",
                 DiaryResponseDto.updateDiary.builder()
                         .diaryId(diary.getId())

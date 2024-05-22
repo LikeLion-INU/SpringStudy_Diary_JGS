@@ -36,7 +36,7 @@ public class DiaryController {
      * @return ResponseEntity<?>
      */
     @PostMapping("/updateDiary")
-    public ResponseEntity<?> updateDiary(@RequestBody DiaryRequestDto.updateDiary dto, HttpServletRequest request) throws ParseException {
+    public ResponseEntity<?> updateDiary(DiaryRequestDto.updateDiary dto, HttpServletRequest request) throws ParseException {
         HttpSession session = request.getSession(false);
         Long userId = (Long) session.getAttribute("userId");
         return ResponseEntity.ok().body(diaryService.updateDiary(dto, userId));

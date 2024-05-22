@@ -20,7 +20,6 @@ public class DiaryRequestDto {
         private int publicState;    //공개상태 (0:전체공개 1:비공개 2:일부공개)
         private String title;       //제목
         private String contents;    //내용
-        private int photoYn;  //사진유무 (0:X 1:O)
         private MultipartFile[] photoFiles; // 첨부파일
 
         private String userSeqBundle;   // 일부공개의 경우의 사용자 구분자값 ,로 구분하여 문자열로 전달
@@ -34,7 +33,7 @@ public class DiaryRequestDto {
                     .tempMax((Double) weather.get("tempMax"))
                     .title(this.title)
                     .contents(this.contents)
-                    .photoYn(this.photoYn)
+                    .photoYn(this.photoFiles.length > 0 ? 1 : 0)
                     .users(users)
                     .build();
         }
@@ -50,7 +49,9 @@ public class DiaryRequestDto {
         private int publicState;    //공개상태 (0:전체공개 1:비공개 2:일부공개)
         private String title;       //제목
         private String contents;    //내용
-        private int photoYn;        //사진유무 (0:X 1:O)
+
+        private String delPhotoSeqBundle;   // 삭제할 이미지 시퀀스의 문자열 (구분자는 ,)
+        private MultipartFile[] photoFiles; // 추가첨부파일
 
         private String userSeqBundle;   // 일부공개의 경우의 사용자 구분자값 ,로 구분하여 문자열로 전달
     }
