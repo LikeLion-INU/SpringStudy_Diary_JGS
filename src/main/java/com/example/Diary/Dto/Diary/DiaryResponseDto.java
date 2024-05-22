@@ -49,8 +49,9 @@ public class DiaryResponseDto {
         private int viewsCnt;        //조회수
         private int likeItCnt;        //좋아요수
         private List<viewerList> viewerList;  // 일부 공개의 경우, 볼 수 있는 유저 정보
+        private List<byte[]> imgDataList;
 
-        public diaryContent(DiaryEntity entity, List<viewerList> data){
+        public diaryContent(DiaryEntity entity, List<viewerList> viewerList, List<byte[]> imgDataList){
             this.diaryId = entity.getId();
             this.publicState = entity.getPublicState();
             this.recordDate = entity.getRecordDate();
@@ -62,7 +63,8 @@ public class DiaryResponseDto {
             this.photoYn = entity.getPhotoYn();
             this.viewsCnt = entity.getViewsCnt();
             this.likeItCnt = entity.getLikeItCnt();
-            this.viewerList = data;
+            this.viewerList = viewerList;
+            this.imgDataList = imgDataList;
         }
     }
 

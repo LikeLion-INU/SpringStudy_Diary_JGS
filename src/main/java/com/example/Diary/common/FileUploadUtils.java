@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -80,8 +81,8 @@ public class FileUploadUtils {
     }
 
     /**
-     * 파일 삭제
-     * @param fileSeq - Long : 삭제하려는 파일 시퀀스 넘버
+     * 이미지 삭제
+     * @param fileSeq - Long : 삭제하려는 이미지 시퀀스 넘버
      */
     public void deleteFile(Long fileSeq) {
 
@@ -104,6 +105,19 @@ public class FileUploadUtils {
             log.debug("FILE NOT FOUND");
             log.debug("savedFilename : {}", fileEntity.getFileUuid());
             photoFileRepository.delete(fileEntity);
+        }
+    }
+
+    /**
+     * 이미지 조회
+     * @param entity - PhotoFile : 바이트로 변환하려는 포토 entity
+     */
+    public byte[] viewImage(PhotoFile entity) {
+        try {
+            String uploadedFilePath = Paths.get(archive, entity.getFileUuid()).toString();
+            return Files.readAllBytes(new File(uploadedFilePath).toPath());
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.FILE_NOT_FOUND);
         }
     }
 

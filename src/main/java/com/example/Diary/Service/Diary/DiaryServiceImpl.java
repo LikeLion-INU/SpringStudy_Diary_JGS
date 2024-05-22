@@ -185,6 +185,8 @@ public class DiaryServiceImpl implements DiaryService{
             DiaryDto diaryDto = new DiaryDto(entity);
 
             // 3-1. 이미지가 있는 경우, 이미지 첨부
+            if (diaryDto.getPhotoYn() == 1)
+                diaryDto.setImgData(getByteImgList(diaryDto.getDiaryId()));
 
             diaryDtoList.add(diaryDto);
         }
@@ -212,19 +214,24 @@ public class DiaryServiceImpl implements DiaryService{
         if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
             return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
         DiaryEntity diary = diaryOpt.get();
-        List<DiaryResponseDto.viewerList> viewerListDto = new ArrayList<>();
 
-        // 2-1. 일부공개의 경우, 공개 설정된 유저 정보 넘겨주기
+        // 3. 일부공개의 경우, 공개 설정된 유저 정보 넘겨주기
+        List<DiaryResponseDto.viewerList> viewerListDto = new ArrayList<>();
         if (diary.getPublicState() == 2) {
             List<Viewer> viewerList = viewerRepository.findByDiaryEntity_Id(diary.getId());
             for (Viewer entity : viewerList)
                 viewerListDto.add(new DiaryResponseDto.viewerList(entity.getUsersEntity()));
         }
 
+        // 4. 등록한 이미지가 있는 경우, 바이트 이미지 리스트 전달
+        List<byte[]> imgDataList = new ArrayList<>();
+        if (diary.getPhotoYn() == 1)
+            imgDataList = getByteImgList(diary.getId());
+
         // 3. 본인이 작성한 diary 인지 확인
         if (userId.equals(diary.getUsers().getId()))
             return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
-                    new DiaryResponseDto.diaryContent(diary, viewerListDto));
+                    new DiaryResponseDto.diaryContent(diary, viewerListDto, imgDataList));
 
         // 4. 비공개 상태인지 확인
         if(diary.getPublicState() == 1)
@@ -240,7 +247,7 @@ public class DiaryServiceImpl implements DiaryService{
         // 6. 전체 공개 상태인지 확인
         if(diary.getPublicState() == 0)
             return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
-                    new DiaryResponseDto.diaryContent(diary,viewerListDto));
+                    new DiaryResponseDto.diaryContent(diary,viewerListDto, imgDataList));
 
         // 7. 일부공개 권한이 있는 viewer 인지 확인
         Optional<Viewer> viewerOpt = viewerRepository
@@ -250,9 +257,15 @@ public class DiaryServiceImpl implements DiaryService{
             return ApiResponse.ERROR(401, "열람 불가능한 diary 입니다.");
         else
             return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
-                    new DiaryResponseDto.diaryContent(diary, viewerListDto));
+                    new DiaryResponseDto.diaryContent(diary, viewerListDto, imgDataList));
     }
 
+    /**
+     * 다이어리 - 조회수 카운트
+     * @param dto DiaryRequestDto.viewsCnt
+     * @param userId Long
+     * @return ResponseEntity<?>
+     */
     @Override
     @Transactional
     public ApiResponse<?> viewsCnt(DiaryRequestDto.viewsCnt dto, Long userId) {
@@ -436,5 +449,13 @@ public class DiaryServiceImpl implements DiaryService{
         viewerRepository.deleteAll(beforeViewers);
     }
 
+    // 다이어리별 바이트화한 이미지 리스트 반환
+    private List<byte[]> getByteImgList(Long diaryId){
+        List<byte[]> imgData = new ArrayList<>();
+        List<PhotoFile> photoFileList = photoFileRepository.findByDiaryEntity_Id(diaryId);
+        for (PhotoFile photoFile : photoFileList)
+            imgData.add(fileUploadUtils.viewImage(photoFile));
+        return imgData;
+    }
 }
 
