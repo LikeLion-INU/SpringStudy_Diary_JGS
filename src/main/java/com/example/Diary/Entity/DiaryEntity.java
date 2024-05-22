@@ -35,6 +35,7 @@ public class DiaryEntity extends BaseEntity{
     private int photoYn;  //사진유무 (0:X 1:O)
 
     private int viewsCnt;   // 조회수
+    private int likeItCnt;   // 좋아요수
 
     @ManyToOne
     @JoinColumn(name = "users_id")
@@ -59,9 +60,14 @@ public class DiaryEntity extends BaseEntity{
         this.photoYn = dto.getPhotoYn();
     }
 
-    // 조회수 카운티
+    // 조회수 카운트
     public void viewsCnt(){
         this.viewsCnt += 1;
+    }
+
+    // 좋아요수 카운트
+    public void likeItsCnt(){
+        this.likeItCnt += 1;
     }
 
 }

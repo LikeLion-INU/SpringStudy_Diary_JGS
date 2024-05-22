@@ -269,7 +269,10 @@ public class DiaryServiceImpl implements DiaryService{
             return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
         DiaryEntity diary = diaryOpt.get();
 
-        // 3. like it 생성
+        // 3. diary 좋아요수 카운트
+        diary.likeItsCnt();
+
+        // 4. like it 생성
         LikeitEntity likeitEntity = LikeitEntity.builder()
                 .diary(diary)
                 .users(users)

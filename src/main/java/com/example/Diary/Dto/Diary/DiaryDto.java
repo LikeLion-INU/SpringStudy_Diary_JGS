@@ -17,7 +17,8 @@ public class DiaryDto {
     private String title;       //제목
     private String contents;    //내용
     private int photoYn;        //사진유무 (0:X 1:O)
-    private int viewsCnt;        //사진유무 (0:X 1:O)
+    private int viewsCnt;        //조회수
+    private int likeItCnt;        //좋아요수
 
     public DiaryDto(DiaryEntity entity){
         this.diaryId = entity.getId();
@@ -30,5 +31,6 @@ public class DiaryDto {
         this.contents = entity.getContents();
         this.photoYn = entity.getPhotoYn();
         this.viewsCnt = entity.getViewsCnt();
+        this.likeItCnt = entity.getLikeItCnt();
     }
 }
