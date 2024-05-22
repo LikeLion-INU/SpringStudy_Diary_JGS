@@ -3,6 +3,7 @@ package com.example.Diary.Dto.Diary;
 import com.example.Diary.Entity.DiaryEntity;
 import com.example.Diary.Entity.UsersEntity;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -20,6 +21,7 @@ public class DiaryRequestDto {
         private String title;       //제목
         private String contents;    //내용
         private int photoYn;  //사진유무 (0:X 1:O)
+        private MultipartFile[] photoFiles; // 첨부파일
 
         private String userSeqBundle;   // 일부공개의 경우의 사용자 구분자값 ,로 구분하여 문자열로 전달
 

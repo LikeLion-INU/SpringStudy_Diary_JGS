@@ -6,7 +6,9 @@ import com.example.Diary.Repository.PhotoFileRepository;
 import com.example.Diary.common.exception.CustomException;
 import com.example.Diary.common.exception.ErrorCode;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -22,11 +24,11 @@ import java.util.UUID;
 @Slf4j
 @Component
 @PropertySource("classpath:/application.properties")
-@AllArgsConstructor
-public class FileUpload {
+public class FileUploadUtils {
     @Value("${spring.locations.file-archive}")
-    private final String archive;
-    private final PhotoFileRepository photoFileRepository;
+    private String archive;
+    @Autowired
+    private PhotoFileRepository photoFileRepository;
 
     /**
      * 이미지 업로드(저장)

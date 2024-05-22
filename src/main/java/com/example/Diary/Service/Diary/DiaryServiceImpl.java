@@ -10,6 +10,7 @@ import com.example.Diary.Repository.LikeitRepository;
 import com.example.Diary.Repository.Users.UsersRepository;
 import com.example.Diary.Repository.ViewerRepository;
 import com.example.Diary.common.ApiResponse;
+import com.example.Diary.common.FileUploadUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -38,6 +39,8 @@ public class DiaryServiceImpl implements DiaryService{
     private final ViewerRepository viewerRepository;
     private final LikeitRepository likeitRepository;
 
+    private final FileUploadUtils fileUploadUtils;
+
     /**
      * 다이어리 - 다이어리 작성 (날씨 API / 이미지 첨부)
      * @param dto DiaryRequestDto.writeDiary
@@ -47,7 +50,7 @@ public class DiaryServiceImpl implements DiaryService{
     @Override
     @Transactional
     public ApiResponse<DiaryResponseDto.writeDiary> writeDiary(DiaryRequestDto.writeDiary dto, Long userId) throws ParseException {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
         UsersEntity users = usersOpt.get();
@@ -65,6 +68,9 @@ public class DiaryServiceImpl implements DiaryService{
             viewerInsert(dto.getUserSeqBundle(), diaryEntity);
 
         // 5. 사진이 존재하는 경우, 사진 데이터 저장
+        if (dto.getPhotoYn() == 1) {
+            List<PhotoFile> savePhotoFile = fileUploadUtils.uploadFiles(diaryEntity, dto.getPhotoFiles());
+        }
 
         return ApiResponse.SUCCESS(200, "저장되었습니다.",
                 DiaryResponseDto.writeDiary.builder()
@@ -85,12 +91,11 @@ public class DiaryServiceImpl implements DiaryService{
     @Override
     @Transactional
     public ApiResponse<?> updateDiary(DiaryRequestDto.updateDiary dto, Long userId) throws ParseException {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
-        UsersEntity users = usersOpt.get();
 
-        // 2. 존재하는 diary인지 확인
+        // 2. 존재하는 diary 인지 확인
         Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
         if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
             return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
@@ -133,12 +138,11 @@ public class DiaryServiceImpl implements DiaryService{
     @Override
     @Transactional
     public ApiResponse<?> deleteDiary(DiaryRequestDto.deleteDiary dto, Long userId) {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
-        UsersEntity users = usersOpt.get();
 
-        // 2. 존재하는 diary인지 확인
+        // 2. 존재하는 diary 인지 확인
         Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
         if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
             return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
@@ -163,10 +167,9 @@ public class DiaryServiceImpl implements DiaryService{
      */
     @Override
     public ApiResponse<?> canViewDiaryList(Long userId) {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
-        UsersEntity users = usersOpt.get();
 
         // 2. 본인 및 팔로우한 사람이 작성한 사람에 해당하는 데이터 가져오기
         List<DiaryEntity> canViewDiaryList = diaryRepository.canViewDiaryList(userId);
@@ -195,12 +198,11 @@ public class DiaryServiceImpl implements DiaryService{
      */
     @Override
     public ApiResponse<?> diaryContent(DiaryRequestDto.diaryContent dto, Long userId) {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
-        UsersEntity users = usersOpt.get();
 
-        // 2. 존재하는 diary인지 확인
+        // 2. 존재하는 diary 인지 확인
         Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
         if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
             return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
@@ -214,7 +216,7 @@ public class DiaryServiceImpl implements DiaryService{
                 viewerListDto.add(new DiaryResponseDto.viewerList(entity.getUsersEntity()));
         }
 
-        // 3. 본인이 작성한 diary인지 확인
+        // 3. 본인이 작성한 diary 인지 확인
         if (userId.equals(diary.getUsers().getId()))
             return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
                     new DiaryResponseDto.diaryContent(diary, viewerListDto));
@@ -235,7 +237,7 @@ public class DiaryServiceImpl implements DiaryService{
             return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
                     new DiaryResponseDto.diaryContent(diary,viewerListDto));
 
-        // 7. 일부공개 권한이 있는 viewer인지 확인
+        // 7. 일부공개 권한이 있는 viewer 인지 확인
         Optional<Viewer> viewerOpt = viewerRepository
                 .findByDiaryEntity_IdAndUsersEntity_Id(diary.getId(), userId);
 
@@ -249,12 +251,11 @@ public class DiaryServiceImpl implements DiaryService{
     @Override
     @Transactional
     public ApiResponse<?> viewsCnt(DiaryRequestDto.viewsCnt dto, Long userId) {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
-        UsersEntity users = usersOpt.get();
 
-        // 2. 존재하는 diary인지 확인
+        // 2. 존재하는 diary 인지 확인
         Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
         if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
             return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
@@ -278,12 +279,12 @@ public class DiaryServiceImpl implements DiaryService{
     @Override
     @Transactional
     public ApiResponse<?> doLikeIt(DiaryRequestDto.doLikeIt dto, Long userId) {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
         UsersEntity users = usersOpt.get();
 
-        // 2. 존재하는 diary인지 확인
+        // 2. 존재하는 diary 인지 확인
         Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
         if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
             return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
@@ -325,7 +326,7 @@ public class DiaryServiceImpl implements DiaryService{
         // 4. 해당 날짜의 00시 unix 시간 가져오기
         dataSet.put("nowUnixTime", unixTime(LocalDate.of(year, month, day)));
 
-        // 5. 전달받은 날짜를 가지고 날씨 API에서 데이터 가져오기
+        // 5. 전달받은 날짜를 가지고 날씨 API 에서 데이터 가져오기
         return getWeather(dataSet);
     }
 
