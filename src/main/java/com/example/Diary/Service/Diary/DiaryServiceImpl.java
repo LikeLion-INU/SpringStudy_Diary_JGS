@@ -154,7 +154,11 @@ public class DiaryServiceImpl implements DiaryService{
         DiaryEntity diary = diaryOpt.get();
 
         // 3. 사진 데이터 확인 후 삭제
-
+        List<PhotoFile> photoFileList = photoFileRepository.findByDiaryEntity_Id(diary.getId());
+        if (!photoFileList.isEmpty()) {
+            for (PhotoFile entity : photoFileList)
+                fileUploadUtils.deleteFile(entity);
+        }
 
         // 4. 열람 가능 사용자 로우 확인후 삭제
         viewerDelete(diary.getId());
