@@ -2,10 +2,14 @@ package com.example.Diary.Controller;
 
 
 import com.example.Diary.Dto.Follow.FollowRequestDTO;
+import com.example.Diary.Dto.Follow.FollowResponseDTO;
+import com.example.Diary.Dto.Users.UsersResponseDTO.UsersInfoResponseDTO;
 import com.example.Diary.Service.Follow.FollowServiceImpl;
+import com.example.Diary.common.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,18 +21,22 @@ public class FollowController {
     private final FollowServiceImpl followService;
 
 
-    @GetMapping("/following")
-    public ResponseEntity<?> followingList(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        Long userId = (Long) session.getAttribute("userId");
-        return ResponseEntity.ok().body(followService.followingList(userId));
+    @PostMapping("/following")
+    public ResponseEntity<?> followingList(HttpSession httpSession) {
+
+        Long userId = (Long) httpSession.getAttribute("userId");
+        FollowResponseDTO.FollwingListDTO result = followService.followingList(userId);
+
+        return ResponseEntity.ok().body(ApiResponse.SUCCESS(HttpStatus.CREATED.value(), "following List", result));
     }
 
-    @GetMapping("/follower")
-    public ResponseEntity<?> followerList(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        Long userId = (Long) session.getAttribute("userId");
-        return ResponseEntity.ok().body(followService.followerList(userId));
+    @PostMapping("/follower")
+    public ResponseEntity<?> followerList(HttpSession httpSession) {
+
+        Long userId = (Long) httpSession.getAttribute("userId");
+        FollowResponseDTO.FollwerListDTO result = followService.followerList(userId);
+
+        return ResponseEntity.ok().body(ApiResponse.SUCCESS(HttpStatus.CREATED.value(), "follower List", result));
     }
 
     //팔로우 요청 - followReq
