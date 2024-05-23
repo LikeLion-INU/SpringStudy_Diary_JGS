@@ -11,7 +11,6 @@ public interface DiaryService {
     ApiResponse<?> deleteDiary(DiaryRequestDto.deleteDiary dto, Long userId);      // 다이어리 - 작성한 다이어리 삭제
     ApiResponse<?> canViewDiaryList(Long userId);            // 다이어리 - 열람가능한 다이어리 리스트 조회
     ApiResponse<?> diaryContent(DiaryRequestDto.diaryContent dto, Long userId);   // 다이어리 - 상세읽기 ( 권한 설정 - 비공개, 전체공개, 일부공개 )
-
-    // 다이어리 - 조회수 카운트
-    // 다이어리 - 좋아요 기능
+    ApiResponse<?> viewsCnt(DiaryRequestDto.viewsCnt dto, Long userId);     // 다이어리 - 조회수 카운트
+    ApiResponse<?> doLikeIt(DiaryRequestDto.doLikeIt dto, Long userId);     // 다이어리 - 좋아요 기능
 }

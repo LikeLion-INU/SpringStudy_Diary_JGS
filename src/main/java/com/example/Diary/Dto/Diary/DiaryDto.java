@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class DiaryDto {
@@ -17,6 +18,10 @@ public class DiaryDto {
     private String title;       //제목
     private String contents;    //내용
     private int photoYn;        //사진유무 (0:X 1:O)
+    private int viewsCnt;        //조회수
+    private int likeItCnt;        //좋아요수
+
+    private List<byte[]> imgData;   // 바이트화 처리된 이미지 리스트
 
     public DiaryDto(DiaryEntity entity){
         this.diaryId = entity.getId();
@@ -28,5 +33,7 @@ public class DiaryDto {
         this.title = entity.getTitle();
         this.contents = entity.getContents();
         this.photoYn = entity.getPhotoYn();
+        this.viewsCnt = entity.getViewsCnt();
+        this.likeItCnt = entity.getLikeItCnt();
     }
 }

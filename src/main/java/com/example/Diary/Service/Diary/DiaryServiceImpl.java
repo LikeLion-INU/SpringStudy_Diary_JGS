@@ -3,15 +3,11 @@ package com.example.Diary.Service.Diary;
 import com.example.Diary.Dto.Diary.DiaryDto;
 import com.example.Diary.Dto.Diary.DiaryRequestDto;
 import com.example.Diary.Dto.Diary.DiaryResponseDto;
-import com.example.Diary.Entity.DiaryEntity;
-import com.example.Diary.Entity.Follow;
-import com.example.Diary.Entity.UsersEntity;
-import com.example.Diary.Entity.Viewer;
-import com.example.Diary.Repository.DiaryRepository;
-import com.example.Diary.Repository.FollowRepository;
+import com.example.Diary.Entity.*;
+import com.example.Diary.Repository.*;
 import com.example.Diary.Repository.Users.UsersRepository;
-import com.example.Diary.Repository.ViewerRepository;
 import com.example.Diary.common.ApiResponse;
+import com.example.Diary.common.FileUploadUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -32,11 +28,16 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class DiaryServiceImpl implements DiaryService{
     private final UsersRepository usersRepository;
     private final DiaryRepository diaryRepository;
     private final FollowRepository followRepository;
     private final ViewerRepository viewerRepository;
+    private final LikeitRepository likeitRepository;
+    private final PhotoFileRepository photoFileRepository;
+
+    private final FileUploadUtils fileUploadUtils;
 
     /**
      * 다이어리 - 다이어리 작성 (날씨 API / 이미지 첨부)
@@ -45,8 +46,9 @@ public class DiaryServiceImpl implements DiaryService{
      * @return ApiResponse<DiaryResponseDto.writeDiary>
      */
     @Override
+    @Transactional
     public ApiResponse<DiaryResponseDto.writeDiary> writeDiary(DiaryRequestDto.writeDiary dto, Long userId) throws ParseException {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
         UsersEntity users = usersOpt.get();
@@ -60,8 +62,12 @@ public class DiaryServiceImpl implements DiaryService{
         Long diaryId = diaryRepository.save(diaryEntity).getId();
 
         // 4. 일부 공개의 경우, 열람 가능한 리스트 저장
+        if (dto.getPublicState() == 2)
+            viewerInsert(dto.getUserSeqBundle(), diaryEntity);
 
         // 5. 사진이 존재하는 경우, 사진 데이터 저장
+        if (dto.getPhotoFiles().length > 0)
+            fileUploadUtils.uploadFiles(diaryEntity, dto.getPhotoFiles());
 
         return ApiResponse.SUCCESS(200, "저장되었습니다.",
                 DiaryResponseDto.writeDiary.builder()
@@ -82,12 +88,11 @@ public class DiaryServiceImpl implements DiaryService{
     @Override
     @Transactional
     public ApiResponse<?> updateDiary(DiaryRequestDto.updateDiary dto, Long userId) throws ParseException {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
-        UsersEntity users = usersOpt.get();
 
-        // 2. 존재하는 diary인지 확인
+        // 2. 존재하는 diary 인지 확인
         Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
         if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
             return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
@@ -97,13 +102,28 @@ public class DiaryServiceImpl implements DiaryService{
         Map<String, Object> weather = setWeatherData(
                 dto.getLocationName(),dto.getYear(), dto.getMonth(), dto.getDay());
 
-        // 4. 공개정도에 따른 열람가능 로우 삭제 또는 생성, update
+        // 4. 수정 전 공개도가 일부공개인 경우, viewer 삭제
+        if (diary.getPublicState() == 2)
+            viewerDelete(diary.getId());
 
-        // 5. 사진이 존재여부에 따른 사진 데이터 삭제 또는 저장
+        // 5. 수정 후 공개도가 일부공개인 경우, viewer 등록
+        if (dto.getPublicState() == 2)
+            viewerInsert(dto.getUserSeqBundle(), diary);
 
-        // 6. 데이터 수정
-        diary.updateDiary(dto, weather);
+        // 6. 삭제된 이미지가 있는 경우, 삭제
+        String[] delPhotoSeqArray = dto.getDelPhotoSeqBundle().split(",");
+        for (String delPhotoSeq : delPhotoSeqArray)
+            fileUploadUtils.deleteFile(Long.parseLong(delPhotoSeq));
 
+        // 7. 새로 추가되는 이미지가 있는 경우
+        if (dto.getPhotoFiles().length > 0)
+            fileUploadUtils.uploadFiles(diary, dto.getPhotoFiles());
+
+        // 8. 데이터 수정
+        Long imgCnt = photoFileRepository.countAllByDiaryEntity_Id(diary.getId());
+        diary.updateDiary(dto, weather, imgCnt);
+
+        // 9. return
         return ApiResponse.SUCCESS(200, "수정되었습니다.",
                 DiaryResponseDto.updateDiary.builder()
                         .diaryId(diary.getId())
@@ -123,20 +143,25 @@ public class DiaryServiceImpl implements DiaryService{
     @Override
     @Transactional
     public ApiResponse<?> deleteDiary(DiaryRequestDto.deleteDiary dto, Long userId) {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
-        UsersEntity users = usersOpt.get();
 
-        // 2. 존재하는 diary인지 확인
+        // 2. 존재하는 diary 인지 확인
         Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
         if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
             return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
         DiaryEntity diary = diaryOpt.get();
 
         // 3. 사진 데이터 확인 후 삭제
+        List<PhotoFile> photoFileList = photoFileRepository.findByDiaryEntity_Id(diary.getId());
+        if (!photoFileList.isEmpty()) {
+            for (PhotoFile entity : photoFileList)
+                fileUploadUtils.deleteFile(entity);
+        }
 
         // 4. 열람 가능 사용자 로우 확인후 삭제
+        viewerDelete(diary.getId());
 
         // 5. diary 삭제
         diaryRepository.delete(diary);
@@ -151,10 +176,9 @@ public class DiaryServiceImpl implements DiaryService{
      */
     @Override
     public ApiResponse<?> canViewDiaryList(Long userId) {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
-        UsersEntity users = usersOpt.get();
 
         // 2. 본인 및 팔로우한 사람이 작성한 사람에 해당하는 데이터 가져오기
         List<DiaryEntity> canViewDiaryList = diaryRepository.canViewDiaryList(userId);
@@ -165,6 +189,8 @@ public class DiaryServiceImpl implements DiaryService{
             DiaryDto diaryDto = new DiaryDto(entity);
 
             // 3-1. 이미지가 있는 경우, 이미지 첨부
+            if (diaryDto.getPhotoYn() == 1)
+                diaryDto.setImgData(getByteImgList(diaryDto.getDiaryId()));
 
             diaryDtoList.add(diaryDto);
         }
@@ -179,25 +205,37 @@ public class DiaryServiceImpl implements DiaryService{
      * 다이어리 - 상세읽기 ( 권한 설정 - 비공개, 전체공개, 일부공개 )
      * @param dto DiaryRequestDto.diaryContent
      * @param userId Long
-     * @return DiaryResponseDto.diaryContent
+     * @return ApiResponse<DiaryResponseDto.diaryContent>
      */
     @Override
     public ApiResponse<?> diaryContent(DiaryRequestDto.diaryContent dto, Long userId) {
-        // 1. 존재하는 user인지 확인
+        // 1. 존재하는 user 인지 확인
         Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
         if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
-        UsersEntity users = usersOpt.get();
 
-        // 2. 존재하는 diary인지 확인
+        // 2. 존재하는 diary 인지 확인
         Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
         if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
             return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
         DiaryEntity diary = diaryOpt.get();
 
-        // 3. 본인이 작성한 diary인지 확인
+        // 3. 일부공개의 경우, 공개 설정된 유저 정보 넘겨주기
+        List<DiaryResponseDto.viewerList> viewerListDto = new ArrayList<>();
+        if (diary.getPublicState() == 2) {
+            List<Viewer> viewerList = viewerRepository.findByDiaryEntity_Id(diary.getId());
+            for (Viewer entity : viewerList)
+                viewerListDto.add(new DiaryResponseDto.viewerList(entity.getUsersEntity()));
+        }
+
+        // 4. 등록한 이미지가 있는 경우, 바이트 이미지 리스트 전달
+        List<byte[]> imgDataList = new ArrayList<>();
+        if (diary.getPhotoYn() == 1)
+            imgDataList = getByteImgList(diary.getId());
+
+        // 3. 본인이 작성한 diary 인지 확인
         if (userId.equals(diary.getUsers().getId()))
             return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
-                    new DiaryResponseDto.diaryContent(diary));
+                    new DiaryResponseDto.diaryContent(diary, viewerListDto, imgDataList));
 
         // 4. 비공개 상태인지 확인
         if(diary.getPublicState() == 1)
@@ -213,18 +251,90 @@ public class DiaryServiceImpl implements DiaryService{
         // 6. 전체 공개 상태인지 확인
         if(diary.getPublicState() == 0)
             return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
-                    new DiaryResponseDto.diaryContent(diary));
+                    new DiaryResponseDto.diaryContent(diary,viewerListDto, imgDataList));
 
-        // 7. 일부공개 권한이 있는 viewer인지 확인
+        // 7. 일부공개 권한이 있는 viewer 인지 확인
         Optional<Viewer> viewerOpt = viewerRepository
                 .findByDiaryEntity_IdAndUsersEntity_Id(diary.getId(), userId);
+
         if(viewerOpt.isEmpty())
             return ApiResponse.ERROR(401, "열람 불가능한 diary 입니다.");
         else
             return ApiResponse.SUCCESS(200, "조회가 완료되었습니다.",
-                    new DiaryResponseDto.diaryContent(diary));
+                    new DiaryResponseDto.diaryContent(diary, viewerListDto, imgDataList));
     }
 
+    /**
+     * 다이어리 - 조회수 카운트
+     * @param dto DiaryRequestDto.viewsCnt
+     * @param userId Long
+     * @return ResponseEntity<?>
+     */
+    @Override
+    @Transactional
+    public ApiResponse<?> viewsCnt(DiaryRequestDto.viewsCnt dto, Long userId) {
+        // 1. 존재하는 user 인지 확인
+        Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
+        if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
+
+        // 2. 존재하는 diary 인지 확인
+        Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
+        if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
+            return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
+        DiaryEntity diary = diaryOpt.get();
+
+        // 3. diary 조회수 카운트
+        diary.viewsCnt();
+
+        return ApiResponse.SUCCESS(200, "조회가 반영되었습니다.",
+                DiaryResponseDto.viewsCnt.builder()
+                        .viewsCnt(diary.getViewsCnt())
+                        .build());
+    }
+
+    /**
+     * 다이어리 - 좋아요 기능
+     * @param dto DiaryRequestDto.doLikeIt
+     * @param userId Long
+     * @return ApiResponse<?>
+     */
+    @Override
+    @Transactional
+    public ApiResponse<?> doLikeIt(DiaryRequestDto.doLikeIt dto, Long userId) {
+        // 1. 존재하는 user 인지 확인
+        Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
+        if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
+        UsersEntity users = usersOpt.get();
+
+        // 2. 존재하는 diary 인지 확인
+        Optional<DiaryEntity> diaryOpt = diaryRepository.findById(dto.getDiaryId());
+        if (diaryOpt.isEmpty() || !userId.equals(diaryOpt.get().getUsers().getId()))
+            return ApiResponse.ERROR(401, "존재하지 않는 diary 입니다.");
+        DiaryEntity diary = diaryOpt.get();
+
+        // 3. diary 좋아요수 카운트
+        diary.likeItsCnt();
+
+        // 4. like it 생성
+        LikeitEntity likeitEntity = LikeitEntity.builder()
+                .diary(diary)
+                .users(users)
+                .build();
+        likeitRepository.save(likeitEntity);
+
+        return ApiResponse.SUCCESS(200, "좋아요가 반영되었습니다.");
+    }
+
+
+
+
+
+
+
+
+    /* ===============================================================================================
+     * private 공통 코드 모음
+     * ===============================================================================================*/
 
     // DB에 저장할 날씨 데이터 생성
     private Map<String, Object> setWeatherData(String locationName, int year, int month, int day) throws ParseException {
@@ -238,7 +348,7 @@ public class DiaryServiceImpl implements DiaryService{
         // 4. 해당 날짜의 00시 unix 시간 가져오기
         dataSet.put("nowUnixTime", unixTime(LocalDate.of(year, month, day)));
 
-        // 5. 전달받은 날짜를 가지고 날씨 API에서 데이터 가져오기
+        // 5. 전달받은 날짜를 가지고 날씨 API 에서 데이터 가져오기
         return getWeather(dataSet);
     }
 
@@ -316,6 +426,40 @@ public class DiaryServiceImpl implements DiaryService{
         result.put("weather", weather);
 
         return result;
+    }
+
+    // 일부 공개의 경우, 열람 가능한 리스트 저장
+    private void viewerInsert(String userSeqBundle, DiaryEntity diaryEntity){
+        // 1. 문자열 , 단위로 구분하여 배열 생성
+        String[] userSeqArray = userSeqBundle.split(",");
+        List<Viewer> viewerList = new ArrayList<>();
+
+        // 2. viewer 리스트 생성
+        for (String userSeqStr : userSeqArray) {
+            viewerList.add(Viewer.builder()
+                    .diaryEntity(diaryEntity)
+                    .usersEntity(new UsersEntity(Long.parseLong(userSeqStr)))
+                    .build());
+        }
+
+        // 3. viewer 저장
+        if (!viewerList.isEmpty())
+            viewerRepository.saveAll(viewerList);
+    }
+
+    // 일부공개 시 열람 가능 사용자 로우 확인후 삭제
+    private void viewerDelete(Long id){
+        List<Viewer> beforeViewers = viewerRepository.findByDiaryEntity_Id(id);
+        viewerRepository.deleteAll(beforeViewers);
+    }
+
+    // 다이어리별 바이트화한 이미지 리스트 반환
+    private List<byte[]> getByteImgList(Long diaryId){
+        List<byte[]> imgData = new ArrayList<>();
+        List<PhotoFile> photoFileList = photoFileRepository.findByDiaryEntity_Id(diaryId);
+        for (PhotoFile photoFile : photoFileList)
+            imgData.add(fileUploadUtils.viewImage(photoFile));
+        return imgData;
     }
 }
 

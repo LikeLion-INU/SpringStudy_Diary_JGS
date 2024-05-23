@@ -55,6 +55,17 @@ public class FollowController {
         return ResponseEntity.ok().body(followService.followApprove(userId, followApproveDTO));
     }
 
+    /**
+     * 미승인 팔로우 리스트 조회
+     * @param request HttpServletRequest
+     * @return ResponseEntity<?>
+     */
+    @PostMapping("/getNotApproveFollowList")
+    public ResponseEntity<?> getNotApproveFollowList(HttpServletRequest request){
+        HttpSession session = request.getSession(false);
+        Long userId = (Long) session.getAttribute("userId");
+        return ResponseEntity.ok().body(followService.getNotApproveFollowList(userId));
+    }
 
 
 }

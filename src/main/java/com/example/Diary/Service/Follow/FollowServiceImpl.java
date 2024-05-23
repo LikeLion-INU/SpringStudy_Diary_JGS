@@ -27,7 +27,6 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-
 public class FollowServiceImpl {
 
     private final FollowRepository followRepository;
@@ -109,8 +108,6 @@ public class FollowServiceImpl {
 
     }
 
-    //사용자 팔로우 요청 리스트 조회 - getwaitingFollowList
-
     //사용자 팔로우 승인 -followApprove
     @Transactional
     public FollowResponseDTO followApprove(Long userId, FollowRequestDTO.FollowApprove followApproveDTO) {
@@ -160,6 +157,30 @@ public class FollowServiceImpl {
 
     // 1.userid,reqid 존재 확인. 2.userid= req 일치 확인
 
+
+    // 팔로우 리스트 조회 - getFollowList
+
+    /**
+     * 미승인 팔로우 리스트 조회
+     * @param userId Long - 사용자 구분자
+     * @return FollowResponseDTO.getNotApproveFollowList
+     */
+    public ApiResponse<?> getNotApproveFollowList(Long userId) {
+        // 1. 사용자 조회
+        Optional<UsersEntity> usersOpt = usersRepository.findById(userId);
+        if(usersOpt.isEmpty()) return ApiResponse.ERROR(401, "존재하지 않는 user 입니다.");
+
+        // 2. 미승인 팔로우 리스트 조회
+        List<Follow> followList = followRepository.findByApproveYnAndResUsersEntity_Id(0, userId);
+
+        // 3. DTO 전환
+        List<FollowResponseDTO.getNotApproveFollow> result = new ArrayList<>();
+        for (Follow entity : followList)
+            result.add(new FollowResponseDTO.getNotApproveFollow(entity));
+
+        // 4. return
+        return ApiResponse.SUCCESS(201, "SUCCESS", new FollowResponseDTO.getNotApproveFollowList(result));
+    }
 
 }
 

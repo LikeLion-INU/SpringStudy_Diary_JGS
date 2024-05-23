@@ -24,7 +24,7 @@ public class DiaryController {
      * @return ResponseEntity<?>
      */
     @PostMapping("/writeDiary")
-    public ResponseEntity<?> writeDiary(@RequestBody DiaryRequestDto.writeDiary dto, HttpServletRequest request) throws ParseException {
+    public ResponseEntity<?> writeDiary(DiaryRequestDto.writeDiary dto, HttpServletRequest request) throws ParseException {
         HttpSession session = request.getSession(false);
         Long userId = (Long) session.getAttribute("userId");
         return ResponseEntity.ok().body(diaryService.writeDiary(dto, userId));
@@ -36,7 +36,7 @@ public class DiaryController {
      * @return ResponseEntity<?>
      */
     @PostMapping("/updateDiary")
-    public ResponseEntity<?> updateDiary(@RequestBody DiaryRequestDto.updateDiary dto, HttpServletRequest request) throws ParseException {
+    public ResponseEntity<?> updateDiary(DiaryRequestDto.updateDiary dto, HttpServletRequest request) throws ParseException {
         HttpSession session = request.getSession(false);
         Long userId = (Long) session.getAttribute("userId");
         return ResponseEntity.ok().body(diaryService.updateDiary(dto, userId));
@@ -75,5 +75,31 @@ public class DiaryController {
         HttpSession session = request.getSession(false);
         Long userId = (Long) session.getAttribute("userId");
         return ResponseEntity.ok().body(diaryService.diaryContent(dto, userId));
+    }
+
+    /**
+     * 다이어리 - 조회수 카운트
+     * @param dto DiaryRequestDto.viewsCnt
+     * @param request HttpServletRequest
+     * @return ResponseEntity<?>
+     */
+    @PostMapping("/viewsCnt")
+    public ResponseEntity<?> viewsCnt(@RequestBody DiaryRequestDto.viewsCnt dto, HttpServletRequest request){
+        HttpSession session = request.getSession(false);
+        Long userId = (Long) session.getAttribute("userId");
+        return ResponseEntity.ok().body(diaryService.viewsCnt(dto, userId));
+    }
+
+    /**
+     * 다이어리 - 좋아요 기능
+     * @param dto DiaryRequestDto.doLikeIt
+     * @param request HttpServletRequest
+     * @return ResponseEntity<?>
+     */
+    @PostMapping("/doLikeIt")
+    public ResponseEntity<?> doLikeIt(@RequestBody DiaryRequestDto.doLikeIt dto, HttpServletRequest request){
+        HttpSession session = request.getSession(false);
+        Long userId = (Long) session.getAttribute("userId");
+        return ResponseEntity.ok().body(diaryService.doLikeIt(dto, userId));
     }
 }

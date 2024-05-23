@@ -16,4 +16,6 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
 
     //팔로워 (응답자 -본인 확인) other -> User
     List<Follow> findByResUsersEntity_Id(Long responser );
+
+    List<Follow> findByApproveYnAndResUsersEntity_Id(int approveYn, Long responser);
 }
