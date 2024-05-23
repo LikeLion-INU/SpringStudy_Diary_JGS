@@ -41,5 +41,9 @@ public class Follow extends BaseEntity{
     }
     */
 
+    public void approve(){
+        this.approveYn = 1;
+    }
+
 
 }
