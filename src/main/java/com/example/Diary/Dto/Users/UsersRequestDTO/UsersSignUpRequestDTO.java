@@ -12,7 +12,7 @@ public class UsersSignUpRequestDTO {
     private String userNickname; // 닉네임
     private String birthday;    // 생일
 
-    public UsersEntity toEntity() { // DTO를 Member 엔티티로 변환하는 메소드
+    public UsersEntity toEntity() { // DTO를 User 엔티티로 변환하는 메소드
         return new UsersEntity(this.userEmail, this.userPassword, this.userNickname, this.birthday);
     }
 }

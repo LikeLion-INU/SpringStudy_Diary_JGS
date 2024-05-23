@@ -128,11 +128,6 @@ public class UsersServicelmpl implements UsersService{
     @Override
     @Transactional
     public UsersInfoResponseDTO update(UsersUpdateRequestDTO updateRequestDTO, Long userId) {
-        log.info("[Updated User Information] Email: {}, Password: {}, Nickname: {}, Birthday: {}",
-                updateRequestDTO.getUserEmail(),
-                updateRequestDTO.getUserPassword(),
-                updateRequestDTO.getUserNickname(),
-                updateRequestDTO.getBirthday());
 
 
         log.info("[usersServiceImpl] update");
@@ -145,18 +140,10 @@ public class UsersServicelmpl implements UsersService{
         UsersEntity userToUpdate = optionalFindMember.get();
         userToUpdate.usersUpdate(updateRequestDTO); // 엔티티 업데이트
 
-        log.info("[Updated User Information] Email: {}, Password: {}, Nickname: {}, Birthday: {}",
-                updateRequestDTO.getUserEmail(),
-                updateRequestDTO.getUserPassword(),
-                updateRequestDTO.getUserNickname(),
-                updateRequestDTO.getBirthday());
-
         // 변경된 엔티티를 데이터베이스에 저장
         log.info("[Saving User] ID: {}", userToUpdate.getId());
         usersRepository.save(userToUpdate); // 변경된 엔티티를 데이터베이스에 저장
         log.info("[User Saved Successfully] ID: {}", userToUpdate.getId());
-
-
 
         return new UsersInfoResponseDTO(userToUpdate);
 
@@ -175,8 +162,8 @@ public class UsersServicelmpl implements UsersService{
         for (DiaryEntity diaryEntity : diaryEntityList) {
             DiaryDto diaryDto = new DiaryDto(diaryEntity);
             diaryDtoList.add(diaryDto);
-
         }
+
         // DiaryListDto 생성 후 반환
         return new DiaryResponseDto.DiaryListDto(diaryDtoList);
 

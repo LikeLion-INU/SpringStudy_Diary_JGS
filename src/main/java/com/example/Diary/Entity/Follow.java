@@ -1,13 +1,17 @@
 package com.example.Diary.Entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import com.example.Diary.Dto.Follow.FollowRequestDTO;
+import jakarta.persistence.*;
 import lombok.Getter;
 
 @Getter
 @Entity
 public class Follow extends BaseEntity{
+    @Id
+    @GeneratedValue
+    @Column (name = "follow_id")
+    private  Long id;
+
     private int approveYn;
 
     @ManyToOne
@@ -17,4 +21,25 @@ public class Follow extends BaseEntity{
     @ManyToOne
     @JoinColumn(name = "responser")
     private UsersEntity resUsersEntity;
+
+
+    public Follow (int approveYn, UsersEntity reqUsersEntity, UsersEntity resUsersEntity) {
+        this.approveYn = approveYn;
+        this.reqUsersEntity = reqUsersEntity;
+        this.resUsersEntity = resUsersEntity;
+    }
+
+    public Follow() {
+
+    }
+
+    /*
+    public void followUpdate (FollowRequestDTO followRequestDTO) {
+        this.approveYn = followRequestDTO.getApproveYn();
+        this.reqUsersEntity = followRequestDTO.getReqUsersEntity();
+        this.resUsersEntity = followRequestDTO.getResUsersEntity();
+    }
+    */
+
+
 }

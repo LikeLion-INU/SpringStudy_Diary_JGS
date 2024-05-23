@@ -14,6 +14,8 @@ public class LikeitEntity extends BaseEntity{
     @Column(name = "likeit_id")
     private Long id;
 
+
+
     @ManyToOne
     @JoinColumn(name = "users_id")
     private UsersEntity users;
