@@ -6,6 +6,7 @@ import com.example.Diary.Entity.UsersEntity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
+import lombok.Getter;
 
 import java.util.List;
 
@@ -40,8 +41,24 @@ public class FollowResponseDTO {
         }
     }
 
+    @Getter
+    public static class getNotApproveFollowList {
+        private List<getNotApproveFollow> list;
+        public getNotApproveFollowList(List<getNotApproveFollow> list){
+            this.list = list;
+        }
+    }
 
+    @Getter
+    public static class getNotApproveFollow {
+        private Long id;
+        private String requesterNickname;
 
+        public getNotApproveFollow(Follow entity){
+            this.id = entity.getId();
+            this.requesterNickname = entity.getReqUsersEntity().getUserNickname();
+        }
+    }
 
 
 }

@@ -9,7 +9,6 @@ import lombok.Getter;
 
 
 @Data
-@Getter
 public class FollowRequestDTO {
 
     private int approveYn;
@@ -21,7 +20,6 @@ public class FollowRequestDTO {
     }
 
     @Data
-    @Getter
     public static class FollowReq {
         private int approveYn;
         private Long reqUserId; // 요청하는 사용자의 ID
@@ -33,7 +31,6 @@ public class FollowRequestDTO {
     }
 
     @Data
-    @Getter
     public static class FollowApprove {
         private int approveYn;
         private Long reqUserId; // 요청하는 사용자의 ID
@@ -44,8 +41,5 @@ public class FollowRequestDTO {
 
         }
     }
-
-
-
 
 }
