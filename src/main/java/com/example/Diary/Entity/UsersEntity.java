@@ -34,6 +34,7 @@ public class UsersEntity extends BaseEntity {
         this.id = id;
     }
 
+
     public void usersUpdate(UsersUpdateRequestDTO updateRequestDTO){
         if (updateRequestDTO.getUserEmail() != null) {
             this.userEmail = updateRequestDTO.getUserEmail();
