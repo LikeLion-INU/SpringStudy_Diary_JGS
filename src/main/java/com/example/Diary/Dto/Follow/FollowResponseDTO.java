@@ -17,6 +17,7 @@ public class FollowResponseDTO {
     private Long reqUserId; // 요청하는 사용자의 ID
     private Long resUserId; // 응답하는 사용자의 ID
 
+
     public FollowResponseDTO(Follow follow) {
         this.id = follow.getId();
         this.approveYn = follow.getApproveYn();
@@ -24,6 +25,7 @@ public class FollowResponseDTO {
         this.resUserId = follow.getResUsersEntity().getId();
     }
 
+    @Data
     public static class FollwingListDTO {
         private List<FollowResponseDTO> follwingListDTO;
         public FollwingListDTO(List<FollowResponseDTO> follwingListDTO) {
@@ -32,6 +34,7 @@ public class FollowResponseDTO {
         }
     }
 
+    @Data
     public static class FollwerListDTO {
         private List<FollowResponseDTO> follwerListDTO;
         public FollwerListDTO(List<FollowResponseDTO> follwerListDTO) {
