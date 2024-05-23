@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,33 +69,37 @@ public class FollowServiceImpl {
 
         // approveyn - 0 , request 본인 , response 상대방 , 본인 -> 상대방
         // 존재하는 유저 확인
-       // Optional<Follow> optionalFindMember = followRepository.findById(userId);
+        // Optional<Follow> optionalFindMember = followRepository.findById(userId);
 
         //userid = reqid
-
-        log.info("User ID: {}", userId);
-        log.info("app: {}", followReqDTO.getApproveYn());
-        log.info("Request User ID: {}", followReqDTO.getReqUserId());
-        log.info("Response User ID: {}", followReqDTO.getResUserId());
-
 
         Optional<UsersEntity> optionalFindReqMember = usersRepository.findById(followReqDTO.getReqUserId());
         Optional<UsersEntity> optionalFindResMember = usersRepository.findById(followReqDTO.getResUserId());
 
         // user, response 둘다 존재해야함
-        if(optionalFindReqMember.isEmpty() || optionalFindResMember.isEmpty()) {
+        if (optionalFindReqMember.isEmpty() || optionalFindResMember.isEmpty()) {
             log.info("user or response user is empty");
             return null;
         }
 
         // userId와 reqUserId가 일치하는지 확인
-        if(!userId.equals(followReqDTO.getReqUserId())) {
+        if (!userId.equals(followReqDTO.getReqUserId())) {
             log.info("userId does not match request user id");
             return null;
         }
 
         UsersEntity requestUser = optionalFindReqMember.get();
         UsersEntity responseUser = optionalFindResMember.get();
+
+
+        Optional<Follow> optionalFollow =
+                followRepository.findByApproveYnAndReqUsersEntity_IdAndResUsersEntity_Id
+                        (0, followReqDTO.getReqUserId(), followReqDTO.getResUserId());
+        if (optionalFollow.isPresent()) {
+            log.info("이미 팔로우 신청");
+            return null;
+        }
+
 
         // User 엔티티 + reqDTO 받아서 팔로우 엔티티로 변환
         Follow followReq = new Follow(0, requestUser, responseUser);
@@ -106,9 +111,8 @@ public class FollowServiceImpl {
 
     //사용자 팔로우 요청 리스트 조회 - getwaitingFollowList
 
-
-
     //사용자 팔로우 승인 -followApprove
+    @Transactional
     public FollowResponseDTO followApprove(Long userId, FollowRequestDTO.FollowApprove followApproveDTO) {
 
         //approveyn = 0 , request 상대 , response 본인 , 상대 -> 본인
@@ -121,12 +125,12 @@ public class FollowServiceImpl {
 
 
         //user, response 둘다 존재해야함
-        if(optionalFindReqMember.isEmpty() && optionalFindResMember.isEmpty()) {
+        if (optionalFindReqMember.isEmpty() && optionalFindResMember.isEmpty()) {
             log.info(" user, req empty");
             return null;
         }
-        //userid = requestid
-        if(!userId.equals(followApproveDTO.getResUserId())) {
+        //userid = response id
+        if (!userId.equals(followApproveDTO.getResUserId())) {
             log.info(" user != response id");
             return null;
         }
@@ -134,11 +138,22 @@ public class FollowServiceImpl {
         UsersEntity requestUser = optionalFindReqMember.get();
         UsersEntity responseUser = optionalFindResMember.get();
 
-        //User 엔티티 + req디티오 받아서 팔로우엔티티로변환
-        Follow follow = new Follow(1, requestUser,  responseUser ) ;
-        followRepository.save(follow);
+
+        Optional<Follow> optionalFollow =
+                followRepository.findByApproveYnAndReqUsersEntity_IdAndResUsersEntity_Id
+                        (0, followApproveDTO.getReqUserId(), followApproveDTO.getResUserId());
+
+        if (optionalFollow.isEmpty()) {
+//            followRepository.save(follow);
+            //User 엔티티 + req디티오 받아서 팔로우엔티티로변환
+            return null;
+        }
+        Follow follow = optionalFollow.get();
+        follow.approve();
 
 
+//        Follow follow = new Follow(1, requestUser, responseUser);
+//        followRepository.save(follow);
         return new FollowResponseDTO(follow);
     }
 
@@ -146,13 +161,10 @@ public class FollowServiceImpl {
     // 1.userid,reqid 존재 확인. 2.userid= req 일치 확인
 
 
-
-
-
-
-
-
-
-
-
 }
+
+
+
+
+
+
